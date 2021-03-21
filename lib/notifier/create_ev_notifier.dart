@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:journey_demo/environment/session_manager.dart';
+import 'package:journey_demo/environment/session_manager.dart';
 import 'package:journey_demo/navigation/bundle/alert_bundle.dart';
 import 'package:journey_demo/navigation/routes.dart';
 import 'package:journey_demo/notifier/base_notifier.dart';
@@ -11,6 +13,8 @@ class CreateEvNotifier extends BaseNotifier with LoaderNotifierMixin {
   final _nameController = TextEditingController();
   final _selectEvController = TextEditingController();
 
+  EvItem _evItem;
+
   TextEditingController get nameController => _nameController;
   TextEditingController get selectEvController => _selectEvController;
 
@@ -18,10 +22,10 @@ class CreateEvNotifier extends BaseNotifier with LoaderNotifierMixin {
     && _selectEvController.text.isNotEmpty;
 
   goToSelectEv() async {
-    final item = (await navigateTo(RouteEnum.selectEv)) as EvItem;
+    _evItem = (await navigateTo(RouteEnum.selectEv)) as EvItem;
 
-    if(item != null) {
-      _selectEvController.text = "${item.brand} ${item.model}";
+    if(_evItem != null) {
+      _selectEvController.text = "${_evItem.brand} ${_evItem.model}";
       notifyListeners();
     }
   }
@@ -29,9 +33,11 @@ class CreateEvNotifier extends BaseNotifier with LoaderNotifierMixin {
   onFieldChange() => notifyListeners();
 
   onNextTap() {
+    SessionManager.instance.evSelected = _evItem;
+
     navigateTo(RouteEnum.alert, arguments: AlertBundle(
       onRightAction: (_) {
-        navigateTo(RouteEnum.map, isRoot: true);
+        navigateTo(RouteEnum.grid, isRoot: true);
       }
     ));
   }
