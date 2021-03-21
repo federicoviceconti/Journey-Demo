@@ -46,7 +46,7 @@ class EvItem {
   String brand;
   String model;
   String type;
-  int usableBatterySizeInKwh;
+  num usableBatterySizeInKwh;
   double averageConsumption;
   int year;
   Set<PlugType> plugs = {};
@@ -57,7 +57,7 @@ class EvItem {
     this.year = json['release_year'];
     this.model = json['model'];
     this.type = json['type'];
-    this.usableBatterySizeInKwh = json['usableBatterySizeInKwh'];
+    this.usableBatterySizeInKwh = json['usable_battery_size'];
     this.averageConsumption = json['energy_consumption']['average_consumption'];
 
     try {
