@@ -48,10 +48,6 @@ class ChargingStationItem {
     this.id = json['ID'];
   }
 
-  LatLng getLatLng() {
-    return LatLng(latitude, longitude);
-  }
-
   String _buildAddressLine(Map<String, dynamic> json) {
     return '${json['AddressLine1'] ?? ''} ${json['AddressLine2'] ?? ''}'.trim();
   }

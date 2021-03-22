@@ -10,19 +10,18 @@ class ChargeMapService extends BaseService {
 
   ChargeMapService({
     @required Client client,
-  }): super(client) {
+  }) : super(client) {
     initHeaders();
   }
 
   Future<ChargingStationListResponse> getChargingStationsFromStartingPoint(
-      {LatLng startingPoint,
-      int maxResult = 10}) {
+      {double latitude, double longitude, int maxResult = 10}) {
     return client.makeGet(
       "/poi",
       queryParameters: {
         "countrycode": "IT",
-        "latitude": startingPoint.latitude,
-        "longitude": startingPoint.longitude,
+        "latitude": latitude,
+        "longitude": longitude,
         "maxresults": maxResult,
       },
       converter: (data) => ChargingStationListResponse.fromResponseData(data),
@@ -30,9 +29,7 @@ class ChargeMapService extends BaseService {
   }
 
   void initHeaders() {
-    client.setCustomHeaders(
-        'X-API-Key', apiKey);
-    client.setCustomHeaders(
-        'User-Agent', 'Journey Demo');
+    client.setCustomHeaders('X-API-Key', apiKey);
+    client.setCustomHeaders('User-Agent', 'Journey Demo');
   }
 }

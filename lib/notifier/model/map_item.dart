@@ -1,3 +1,4 @@
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:journey_demo/services/open_charge_map/response/charging_station_list_response.dart';
 
 class MapItem {
@@ -32,6 +33,7 @@ enum PositionStatus { start, end }
 
 class StationItem extends MapItem {
   num id;
+  String uuid;
   String title;
   String addressLine;
   String city;
@@ -57,5 +59,9 @@ class StationItem extends MapItem {
     this.province = item.province;
     this.plugs = item.plugs;
     this.id = item.id;
+  }
+
+  LatLng getLatLng() {
+    return LatLng(latitude, longitude);
   }
 }

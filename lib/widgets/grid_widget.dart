@@ -38,13 +38,15 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
         },
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildGridView(),
-            SizedBox(height: 8),
-            _buildButtons(),
-            _buildData(),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildGridView(),
+              SizedBox(height: 8),
+              _buildButtons(),
+              _buildData(),
+            ],
+          ),
         ),
       ),
     );
@@ -56,6 +58,9 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
     return GestureDetector(
       onTap: () {
         notifier.onGridTap(item);
+      },
+      onLongPress: () {
+        notifier.showTooltipOnPosition(key, item);
       },
       child: Container(
         key: key,
@@ -92,10 +97,10 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
           children: [
             Spacer(),
             Expanded(
-              flex: 3,
+              flex: 4,
               child: RaisedButton(
                 child: BoldText(
-                  notifier.wallText,
+                  "Change state",
                   color: Colors.black,
                 ),
                 onPressed: () => notifier.changeStateOnTap(),
@@ -103,7 +108,7 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
             ),
             Spacer(),
             Expanded(
-              flex: 3,
+              flex: 4,
               child: RaisedButton(
                 child: BoldText(
                   "Clear all",
@@ -122,10 +127,16 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
   _buildGridView() {
     return Consumer<GridNotifier>(
       builder: (_, notifier, __) {
-        return GridView.count(
-          shrinkWrap: true,
-          crossAxisCount: notifier.width,
-          children: _generateGrid(notifier),
+        return Stack(
+          children: [
+            GridView.count(
+              physics: NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              crossAxisCount: notifier.width,
+              children: _generateGrid(notifier),
+            ),
+            _buildTooltip(notifier),
+          ],
         );
       },
     );
@@ -254,5 +265,40 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
         ],
       ),
     );
+  }
+
+  _buildTooltip(GridNotifier notifier) {
+    final bundle = notifier.tooltipBundle;
+
+    if (bundle == null) {
+      return IgnorePointer();
+    } else {
+      return Positioned(
+        top: bundle.top,
+        left: bundle.left,
+        child: Container(
+          width: 200,
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  BoldText(
+                    bundle.title,
+                    color: Colors.black,
+                  ),
+                  SizedBox(height: 4),
+                  RegularText(
+                    bundle.subtitle,
+                    color: Colors.black,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
   }
 }

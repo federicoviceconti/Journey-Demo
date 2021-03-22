@@ -2,11 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
-import 'package:get_it/get_it.dart';
 import 'package:journey_demo/common/mixin_geolocator.dart';
 import 'package:journey_demo/notifier/mixin/mixin_loader_notifier.dart';
 import 'package:journey_demo/notifier/model/direction.dart';
-import 'package:journey_demo/services/open_charge_map/charge_map_service.dart';
+import 'package:journey_demo/services/open_charge_map/response/charging_station_list_response.dart';
 import 'package:uuid/uuid.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:journey_demo/common/asset/image_helper.dart';
@@ -15,8 +14,10 @@ import 'package:journey_demo/notifier/base_notifier.dart';
 import 'package:journey_demo/notifier/model/map_item.dart';
 import 'package:xml2json/xml2json.dart';
 
+import 'mixin/charge_map_mixin.dart';
+
 class MapNotifier extends BaseNotifier
-    with LoaderNotifierMixin, GeolocatorMixin {
+    with LoaderNotifierMixin, GeolocatorMixin, ChargeMapMixin {
   static const MAX_MARKER_TYPE_SET = 2;
 
   StationItem _stationSelected;
@@ -42,29 +43,29 @@ class MapNotifier extends BaseNotifier
   void init() async {
     try {
       showLoader();
-
       clearAllMarkers();
 
-      final service = GetIt.instance<ChargeMapService>();
-      final response = await service.getChargingStationsFromStartingPoint(
-          startingPoint: _initialPosition.target, maxResult: 20);
+      final response = await getChargingStationsFromStartingPoint(
+        startingPoint: _initialPosition.target,
+        maxResult: 20,
+      );
 
       final markerIcon = await _getMarkerIcon("marker_cu");
 
-      response.items.forEach((item) {
-        final stationItem = StationItem.fromChargingStationItem(item);
+      convertChargingStationResponseToItem(response).forEach(
+        (StationItem item) {
+          _markers.add(
+            Marker(
+              markerId: MarkerId(item.uuid),
+              position: item.getLatLng(),
+              icon: markerIcon,
+              onTap: () => _onChargingUnitTap(item),
+            ),
+          );
 
-        _markers.add(
-          Marker(
-            markerId: MarkerId(item.uuid),
-            position: item.getLatLng(),
-            icon: markerIcon,
-            onTap: () => _onChargingUnitTap(stationItem),
-          ),
-        );
-
-        _mapItems.add(stationItem);
-      });
+          _mapItems.add(item);
+        },
+      );
 
       hideLoader();
     } catch (e) {

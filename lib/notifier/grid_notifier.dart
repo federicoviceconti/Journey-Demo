@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:journey_demo/environment/session_manager.dart';
 import 'package:journey_demo/notifier/base_notifier.dart';
 import 'package:journey_demo/notifier/mixin/mixin_loader_notifier.dart';
 import 'package:journey_demo/notifier/model/grid_item.dart';
+import 'package:journey_demo/notifier/model/map_item.dart';
+import 'package:journey_demo/notifier/model/tooltip_bundle.dart';
 import 'package:journey_demo/services/ev/response/ev_list_response.dart';
 
-class GridNotifier extends BaseNotifier with LoaderNotifierMixin {
+import 'mixin/charge_map_mixin.dart';
+
+class GridNotifier extends BaseNotifier
+    with LoaderNotifierMixin, ChargeMapMixin {
   List<GridItem> _items = [];
+  List<StationItem> _cuList = [];
+
+  TooltipBundle _tooltipBundle;
+
+  TooltipBundle get tooltipBundle => _tooltipBundle;
 
   num get batterySizeKWH => _evSelected?.usableBatterySizeInKwh ?? 0;
 
@@ -20,8 +31,6 @@ class GridNotifier extends BaseNotifier with LoaderNotifierMixin {
 
   int get height => 12;
 
-  String get wallText => "Change state";
-
   String get evNameTotal => _evSelected == null
       ? ''
       : "${_evSelected.brand ?? ''} ${_evSelected.model ?? ''} ${_evSelected.type ?? ''} ${_evSelected.year ?? ''}";
@@ -32,10 +41,14 @@ class GridNotifier extends BaseNotifier with LoaderNotifierMixin {
     init();
   }
 
-  void init() {
+  Future<void> init() async {
     showLoader();
 
     _evSelected = SessionManager.instance.evSelected;
+    _cuList = await getChargingStationsAndConvertToItem(
+      startingPoint: LatLng(42, 12),
+      maxResult: 5,
+    );
 
     final itemGenerated = List.generate(
       width * height,
@@ -53,34 +66,48 @@ class GridNotifier extends BaseNotifier with LoaderNotifierMixin {
   }
 
   void onGridTap(GridItem item) {
-    switch (currentState) {
-      case GridSelectionType.none:
-        item.selectionType = GridSelectionType.start;
-        currentState = GridSelectionType.start;
-        break;
-      case GridSelectionType.start:
-        item.selectionType = GridSelectionType.end;
-        currentState = GridSelectionType.end;
-        break;
-      case GridSelectionType.end:
-        item.selectionType = GridSelectionType.wall;
-        currentState = GridSelectionType.wall;
-        break;
-      case GridSelectionType.wall:
-        item.selectionType = item.selectionType == GridSelectionType.wall
-            ? GridSelectionType.none
-            : GridSelectionType.wall;
-        break;
-      case GridSelectionType.cu:
-        item.selectionType = item.selectionType == GridSelectionType.cu
-            ? GridSelectionType.none
-            : GridSelectionType.cu;
-        break;
-      default:
-        return;
+    if(tooltipBundle == null) {
+      switch (currentState) {
+        case GridSelectionType.none:
+          item.selectionType = GridSelectionType.start;
+          currentState = GridSelectionType.start;
+          break;
+        case GridSelectionType.start:
+          item.selectionType = GridSelectionType.end;
+          currentState = GridSelectionType.end;
+          break;
+        case GridSelectionType.end:
+          item.selectionType = GridSelectionType.wall;
+          currentState = GridSelectionType.wall;
+          break;
+        case GridSelectionType.wall:
+          item.selectionType = item.selectionType == GridSelectionType.wall
+              ? GridSelectionType.none
+              : GridSelectionType.wall;
+          break;
+        case GridSelectionType.cu:
+          _handleTapWhenCU(item);
+          break;
+        default:
+          return;
+      }
+    } else {
+      _tooltipBundle = null;
     }
 
     notifyListeners();
+  }
+
+  void _handleTapWhenCU(GridItem item) {
+    item.selectionType = item.selectionType == GridSelectionType.cu || _cuList.isEmpty
+        ? GridSelectionType.none
+        : GridSelectionType.cu;
+
+    if (item.selectionType == GridSelectionType.cu && _cuList.isNotEmpty) {
+      item.station = _cuList.removeLast();
+    } else {
+      item.station = null;
+    }
   }
 
   Color getGridColor(GridSelectionType type) {
@@ -159,5 +186,23 @@ class GridNotifier extends BaseNotifier with LoaderNotifierMixin {
       default:
         return "";
     }
+  }
+
+  void showTooltipOnPosition(GlobalKey key, GridItem item) {
+    final renderBox = key.currentContext.findRenderObject() as RenderBox;
+    Offset position = renderBox.localToGlobal(Offset.zero);
+
+    if(item.station != null) {
+      _tooltipBundle = TooltipBundle(
+        top: position.dy,
+        left: position.dx,
+        title: item.station.title,
+        subtitle: item.station.addressLine
+      );
+    } else {
+      _tooltipBundle = null;
+    }
+
+    notifyListeners();
   }
 }
