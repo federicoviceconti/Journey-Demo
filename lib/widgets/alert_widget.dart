@@ -45,7 +45,8 @@ class _AlertWidgetState extends State<AlertWidget> {
               BorderButton(
                 onTap: () => notifier.onActionRightTap(),
                 child: BoldText("OK"),
-              )
+              ),
+              SizedBox(height: 20),
             ],
           ),
         );

@@ -178,7 +178,7 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           BoldText(
-            "Legend:",
+            "Legend",
             color: Colors.black,
           ),
           SizedBox(height: 4),
@@ -186,6 +186,7 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
           _buildLegendItem(notifier, GridSelectionType.end),
           _buildLegendItem(notifier, GridSelectionType.wall),
           _buildLegendItem(notifier, GridSelectionType.path),
+          _buildLegendItem(notifier, GridSelectionType.cu),
           _buildLegendItem(notifier, GridSelectionType.none),
         ],
       ),
@@ -198,7 +199,7 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           BoldText(
-            "Grid data: ",
+            "Grid data",
             color: Colors.black,
           ),
           SizedBox(height: 4),

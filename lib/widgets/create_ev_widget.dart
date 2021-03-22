@@ -42,9 +42,12 @@ class _CreateYourEvWidgetState extends State<CreateYourEvWidget> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 16),
-              Icon(
-                Icons.arrow_back_ios,
-                color: Colors.deepOrangeAccent,
+              GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: Icon(
+                  Icons.arrow_back_ios,
+                  color: Colors.deepOrangeAccent,
+                ),
               ),
               SizedBox(height: 16),
               BoldText(
@@ -77,14 +80,19 @@ class _CreateYourEvWidgetState extends State<CreateYourEvWidget> {
   _buildButton() {
     return Consumer<CreateEvNotifier>(
       builder: (_, notifier, ___) {
-        return BorderButton(
-          onTap: () => notifier.onNextTap(),
-          width: double.infinity,
-          enable: notifier.isEnableButton,
-          child: BoldText(
-            "Continue",
-            align: TextAlign.center,
-          ),
+        return Column(
+          children: [
+            BorderButton(
+              onTap: () => notifier.onNextTap(),
+              width: double.infinity,
+              enable: notifier.isEnableButton,
+              child: BoldText(
+                "Continue",
+                align: TextAlign.center,
+              ),
+            ),
+            SizedBox(height: 16),
+          ],
         );
       },
     );

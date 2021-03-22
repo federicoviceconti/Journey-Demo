@@ -31,7 +31,7 @@ class _OnBoardingWidgetState extends State<OnBoardingWidget> {
         ),
         SafeArea(
           child: Padding(
-            padding: const EdgeInsets.only(left: 32.0),
+            padding: const EdgeInsets.only(left: 36.0),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Column(
@@ -93,7 +93,7 @@ class _OnBoardingWidgetState extends State<OnBoardingWidget> {
               onTap: () => notifier.onNextTap(),
               child: BoldText("Get started!"),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 32),
           ],
         );
       },
