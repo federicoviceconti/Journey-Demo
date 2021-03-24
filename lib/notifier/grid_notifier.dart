@@ -66,7 +66,7 @@ class GridNotifier extends BaseNotifier
   }
 
   void onGridTap(GridItem item) {
-    if(tooltipBundle == null) {
+    if (tooltipBundle == null) {
       switch (currentState) {
         case GridSelectionType.none:
           item.selectionType = GridSelectionType.start;
@@ -99,9 +99,10 @@ class GridNotifier extends BaseNotifier
   }
 
   void _handleTapWhenCU(GridItem item) {
-    item.selectionType = item.selectionType == GridSelectionType.cu || _cuList.isEmpty
-        ? GridSelectionType.none
-        : GridSelectionType.cu;
+    item.selectionType =
+        item.selectionType == GridSelectionType.cu || _cuList.isEmpty
+            ? GridSelectionType.none
+            : GridSelectionType.cu;
 
     if (item.selectionType == GridSelectionType.cu && _cuList.isNotEmpty) {
       item.station = _cuList.removeLast();
@@ -189,20 +190,38 @@ class GridNotifier extends BaseNotifier
   }
 
   void showTooltipOnPosition(GlobalKey key, GridItem item) {
+    final width = 200.0;
+    final navContext = navigatorState.context;
+    final phoneWidth = MediaQuery.of(navContext).size.width;
+
     final renderBox = key.currentContext.findRenderObject() as RenderBox;
     Offset position = renderBox.localToGlobal(Offset.zero);
 
-    if(item.station != null) {
+    final xAxisPosition =
+        position.dx + width > phoneWidth ? position.dx - width : position.dx;
+
+    if (item.station != null) {
       _tooltipBundle = TooltipBundle(
         top: position.dy,
-        left: position.dx,
+        left: xAxisPosition,
         title: item.station.title,
-        subtitle: item.station.addressLine
+        subtitle: item.station.addressLine,
+        width: width,
       );
     } else {
       _tooltipBundle = null;
     }
 
     notifyListeners();
+  }
+
+  void calculatePath() {
+    _initSpots();
+  }
+
+  void _initSpots() {
+    _items.forEach((element) {
+      element.spot = Spot.zeroCost();
+    });
   }
 }

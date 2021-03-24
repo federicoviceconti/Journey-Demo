@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:journey_demo/common/text/bold_text.dart';
 import 'package:journey_demo/common/text/regular_text.dart';
 import 'package:journey_demo/common/widget/base_widget.dart';
+import 'package:journey_demo/common/widget/card_tooltip.dart';
 import 'package:journey_demo/notifier/grid_notifier.dart';
 import 'package:provider/provider.dart';
 import 'package:journey_demo/notifier/model/grid_item.dart';
@@ -276,27 +277,10 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
       return Positioned(
         top: bundle.top,
         left: bundle.left,
-        child: Container(
-          width: 200,
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  BoldText(
-                    bundle.title,
-                    color: Colors.black,
-                  ),
-                  SizedBox(height: 4),
-                  RegularText(
-                    bundle.subtitle,
-                    color: Colors.black,
-                  ),
-                ],
-              ),
-            ),
-          ),
+        child: CardTooltip(
+          width: bundle.width,
+          title: bundle.title,
+          subtitle: bundle.subtitle,
         ),
       );
     }
