@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:journey_demo/environment/session_manager.dart';
@@ -234,8 +236,11 @@ class GridNotifier extends BaseNotifier
     final GridItem end = _getElementByType(GridSelectionType.end);
 
     if (start != null && end != null) {
-      final openSet = [start];
-      final closeSet = [];
+      final List<GridItem> openSet = [start];
+      final List<GridItem> closeSet = _items
+          .where((item) => item.selectionType == GridSelectionType.wall)
+          .toList();
+
       final cameFrom = [];
 
       while (openSet.isNotEmpty) {
@@ -243,10 +248,11 @@ class GridNotifier extends BaseNotifier
 
         if (current == end) {
           debugPrint("END!");
-          return;
+          break;
         }
 
-        closeSet.add(openSet.remove(current));
+        openSet.remove(current);
+        closeSet.add(current);
 
         final neighbors = current.getNeighbors(
           maxRows: width,
@@ -257,19 +263,21 @@ class GridNotifier extends BaseNotifier
           final gridItem =
               _getItemFromGridFromRowAndCols(tupleItem.item1, tupleItem.item2);
 
-          final tentativeGScore = gridItem.spot.g + _dist(current, gridItem);
+          if(!closeSet.contains(gridItem)) {
+            final tentativeGScore = gridItem.spot.g + _dist(current, gridItem);
 
-          if(tentativeGScore < gridItem.spot.g) {
-            final indexCame = cameFrom.indexOf(gridItem);
-            if(indexCame != -1) {
-              cameFrom[indexCame] = current;
-            }
+            if (tentativeGScore < gridItem.spot.g) {
+              final indexCame = cameFrom.indexOf(gridItem);
+              if (indexCame != -1) {
+                cameFrom[indexCame] = current;
+              }
 
-            gridItem.spot.g = tentativeGScore;
-            gridItem.spot.f = gridItem.spot.g + heuristic(gridItem);
+              gridItem.spot.g = tentativeGScore;
+              gridItem.spot.f = gridItem.spot.g + _heuristic(current, gridItem);
 
-            if(!openSet.contains(gridItem)) {
-              openSet.add(gridItem);
+              if (!openSet.contains(gridItem)) {
+                openSet.add(gridItem);
+              }
             }
           }
         }
@@ -300,10 +308,20 @@ class GridNotifier extends BaseNotifier
   }
 
   num _dist(GridItem current, GridItem gridItem) {
-    return 0;
+    final x = gridItem.row - gridItem.row;
+    final y = gridItem.column - gridItem.column;
+    return sqrt(pow(x, 2) + pow(y, 2));
   }
 
-  num heuristic(GridItem gridItem) {
-    return 0;
+  num _heuristic(GridItem current, GridItem gridItem) {
+    var d;
+    if (_allowDiagonal) {
+      d = _dist(current, gridItem);
+    } else {
+      d = (current.row - gridItem.row).abs() +
+          (current.column - gridItem.column).abs();
+    }
+
+    return d;
   }
 }
