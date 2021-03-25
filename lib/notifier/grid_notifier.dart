@@ -19,6 +19,10 @@ class GridNotifier extends BaseNotifier
 
   TooltipBundle get tooltipBundle => _tooltipBundle;
 
+  bool _allowDiagonal = false;
+
+  bool get allowDiagonal => _allowDiagonal;
+
   num get batterySizeKWH => _evSelected?.usableBatterySizeInKwh ?? 0;
 
   List<GridItem> get items => _items;
@@ -63,6 +67,10 @@ class GridNotifier extends BaseNotifier
     _items = itemGenerated;
 
     hideLoader();
+  }
+
+  void allowDiagonalChange() {
+    _allowDiagonal = !allowDiagonal;
   }
 
   void onGridTap(GridItem item) {
@@ -125,6 +133,8 @@ class GridNotifier extends BaseNotifier
         return Colors.black;
       case GridSelectionType.cu:
         return Colors.green;
+      case GridSelectionType.walked:
+        return Colors.yellow;
       default:
         throw UnsupportedError("Type not found!");
     }
@@ -163,9 +173,8 @@ class GridNotifier extends BaseNotifier
     notifyListeners();
   }
 
-  _containsTypeFromList(GridSelectionType type) {
-    final item = _items.firstWhere((element) => element.selectionType == type,
-        orElse: () => null);
+  bool _containsTypeFromList(GridSelectionType type) {
+    final item = _getElementByType(type);
 
     return item != null;
   }
@@ -184,6 +193,8 @@ class GridNotifier extends BaseNotifier
         return "Wall";
       case GridSelectionType.cu:
         return "CU";
+      case GridSelectionType.walked:
+        return "Walked";
       default:
         return "";
     }
@@ -217,11 +228,82 @@ class GridNotifier extends BaseNotifier
 
   void calculatePath() {
     _initSpots();
+
+    GridItem current;
+    final GridItem start = _getElementByType(GridSelectionType.start);
+    final GridItem end = _getElementByType(GridSelectionType.end);
+
+    if (start != null && end != null) {
+      final openSet = [start];
+      final closeSet = [];
+      final cameFrom = [];
+
+      while (openSet.isNotEmpty) {
+        current = _getLowestFScoreFromSet(openSet);
+
+        if (current == end) {
+          debugPrint("END!");
+          return;
+        }
+
+        closeSet.add(openSet.remove(current));
+
+        final neighbors = current.getNeighbors(
+          maxRows: width,
+          maxCols: height,
+        );
+
+        for (final tupleItem in neighbors) {
+          final gridItem =
+              _getItemFromGridFromRowAndCols(tupleItem.item1, tupleItem.item2);
+
+          final tentativeGScore = gridItem.spot.g + _dist(current, gridItem);
+
+          if(tentativeGScore < gridItem.spot.g) {
+            final indexCame = cameFrom.indexOf(gridItem);
+            if(indexCame != -1) {
+              cameFrom[indexCame] = current;
+            }
+
+            gridItem.spot.g = tentativeGScore;
+            gridItem.spot.f = gridItem.spot.g + heuristic(gridItem);
+
+            if(!openSet.contains(gridItem)) {
+              openSet.add(gridItem);
+            }
+          }
+        }
+      }
+    }
   }
+
+  GridItem _getItemFromGridFromRowAndCols(int row, int col) =>
+      _items[row + col];
 
   void _initSpots() {
     _items.forEach((element) {
       element.spot = Spot.zeroCost();
     });
+  }
+
+  GridItem _getElementByType(GridSelectionType type) {
+    return _items.firstWhere((element) => element.selectionType == type,
+        orElse: () => null);
+  }
+
+  GridItem _getLowestFScoreFromSet(List<GridItem> openSet) {
+    return openSet.reduce(
+      (value, element) {
+        return value.spot.f < element.spot.f ? value : element;
+      },
+    );
+  }
+
+  num _dist(GridItem current, GridItem gridItem) {
+    return 0;
+  }
+
+  num heuristic(GridItem gridItem) {
+    return 0;
   }
 }

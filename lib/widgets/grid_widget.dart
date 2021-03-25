@@ -198,6 +198,7 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
           _buildLegendItem(notifier, GridSelectionType.end),
           _buildLegendItem(notifier, GridSelectionType.wall),
           _buildLegendItem(notifier, GridSelectionType.path),
+          _buildLegendItem(notifier, GridSelectionType.walked),
           _buildLegendItem(notifier, GridSelectionType.cu),
           _buildLegendItem(notifier, GridSelectionType.none),
         ],
@@ -215,53 +216,25 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
             color: Colors.black,
           ),
           SizedBox(height: 4),
-          Row(
-            children: [
-              BoldText(
-                "Grid size: ",
-                color: Colors.black,
-              ),
-              RegularText(
-                "${notifier.width}x${notifier.height}",
-                color: Colors.black,
-              ),
-            ],
+          _buildRowInformation(
+            "Grid size: ",
+            "${notifier.width}x${notifier.height}",
           ),
-          Row(
-            children: [
-              BoldText(
-                "Current state: ",
-                color: Colors.black,
-              ),
-              RegularText(
-                "${notifier.currentStateText}",
-                color: Colors.black,
-              ),
-            ],
+          _buildRowInformation(
+            "Diagonal move: ",
+            "${notifier.allowDiagonal}",
           ),
-          Row(
-            children: [
-              BoldText(
-                "EV: ",
-                color: Colors.black,
-              ),
-              RegularText(
-                "${notifier.evNameTotal ?? ''}",
-                color: Colors.black,
-              ),
-            ],
+          _buildRowInformation(
+            "Current state: ",
+            "${notifier.currentStateText}",
           ),
-          Row(
-            children: [
-              BoldText(
-                "Battery size (kWh): ",
-                color: Colors.black,
-              ),
-              RegularText(
-                "${notifier.batterySizeKWH ?? ''}",
-                color: Colors.black,
-              ),
-            ],
+          _buildRowInformation(
+            "EV: ",
+            "${notifier.evNameTotal ?? ''}",
+          ),
+          _buildRowInformation(
+            "Battery size (kWh): ",
+            "${notifier.batterySizeKWH ?? ''}",
           ),
         ],
       ),
@@ -284,5 +257,20 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
         ),
       );
     }
+  }
+
+  _buildRowInformation(String title, String text) {
+    return Row(
+      children: [
+        BoldText(
+          title,
+          color: Colors.black,
+        ),
+        RegularText(
+          text,
+          color: Colors.black,
+        ),
+      ],
+    );
   }
 }
