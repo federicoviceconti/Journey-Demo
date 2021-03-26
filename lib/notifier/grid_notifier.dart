@@ -43,6 +43,10 @@ class GridNotifier extends BaseNotifier
 
   String get currentStateText => getTextBySelectionType(currentState);
 
+  bool _lockClick = false;
+
+  bool get lockClick => _lockClick;
+
   void reload() {
     init();
   }
@@ -76,6 +80,8 @@ class GridNotifier extends BaseNotifier
   }
 
   void onGridTap(GridItem item) {
+    if(lockClick) return;
+
     if (tooltipBundle == null) {
       switch (currentState) {
         case GridSelectionType.none:
@@ -149,10 +155,13 @@ class GridNotifier extends BaseNotifier
     }).toList();
 
     currentState = GridSelectionType.none;
+    _lockClick = false;
     notifyListeners();
   }
 
   changeStateOnTap() {
+    if(lockClick) return;
+
     if (currentState == GridSelectionType.start ||
         currentState == GridSelectionType.end) {
       currentState = GridSelectionType.cu;
@@ -229,6 +238,9 @@ class GridNotifier extends BaseNotifier
   }
 
   void calculatePath() {
+    _lockClick = true;
+    notifyListeners();
+
     _initSpots();
 
     GridItem current;
@@ -240,8 +252,7 @@ class GridNotifier extends BaseNotifier
       final List<GridItem> closeSet = _items
           .where((item) => item.selectionType == GridSelectionType.wall)
           .toList();
-
-      final cameFrom = [];
+      final List<GridItem> cameFrom = [];
 
       while (openSet.isNotEmpty) {
         current = _getLowestFScoreFromSet(openSet);
@@ -264,24 +275,22 @@ class GridNotifier extends BaseNotifier
               _getItemFromGridFromRowAndCols(tupleItem.item1, tupleItem.item2);
 
           if(!closeSet.contains(gridItem)) {
-            final tentativeGScore = gridItem.spot.g + _dist(current, gridItem);
+            final tentativeGScore = gridItem.spot.g + _heuristic(current, gridItem);
 
-            if (tentativeGScore < gridItem.spot.g) {
-              final indexCame = cameFrom.indexOf(gridItem);
-              if (indexCame != -1) {
-                cameFrom[indexCame] = current;
-              }
-
+            if(!openSet.contains(gridItem)) {
+              openSet.add(gridItem);
+            } else if (tentativeGScore < gridItem.spot.g) {
               gridItem.spot.g = tentativeGScore;
-              gridItem.spot.f = gridItem.spot.g + _heuristic(current, gridItem);
+              gridItem.spot.h = _heuristic(current, gridItem);
+              gridItem.spot.f = gridItem.spot.g + gridItem.spot.h;
 
-              if (!openSet.contains(gridItem)) {
-                openSet.add(gridItem);
-              }
+              cameFrom.add(current);
             }
           }
         }
       }
+
+      print("No solution :(\n$closeSet");
     }
   }
 

@@ -97,17 +97,40 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
         return Row(
           children: [
             Spacer(),
-            Expanded(
-              flex: 4,
-              child: RaisedButton(
-                child: BoldText(
-                  "Change state",
-                  color: Colors.black,
+            Visibility(
+              visible: !notifier.lockClick,
+              child: Expanded(
+                flex: 4,
+                child: RaisedButton(
+                  child: BoldText(
+                    "Change state",
+                    color: Colors.black,
+                  ),
+                  onPressed: () => notifier.changeStateOnTap(),
                 ),
-                onPressed: () => notifier.changeStateOnTap(),
               ),
             ),
-            Spacer(),
+            Visibility(
+              visible: !notifier.lockClick,
+              child: Spacer(),
+            ),
+            Visibility(
+              visible: !notifier.lockClick,
+              child: Expanded(
+                flex: 4,
+                child: RaisedButton(
+                  child: BoldText(
+                    "Calculate",
+                    color: Colors.black,
+                  ),
+                  onPressed: () => notifier.calculatePath(),
+                ),
+              ),
+            ),
+            Visibility(
+              visible: !notifier.lockClick,
+              child: Spacer(),
+            ),
             Expanded(
               flex: 4,
               child: RaisedButton(

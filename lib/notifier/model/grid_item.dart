@@ -19,7 +19,7 @@ class GridItem {
     int maxRows = 0,
     int maxCols = 0,
   }) {
-    final neighbors = [];
+    final List<Tuple2<int,int>> neighbors = [];
 
     if (row > 0) {
       neighbors.add(Tuple2.fromList([row - 1, column]));
@@ -35,6 +35,11 @@ class GridItem {
     }
 
     return neighbors;
+  }
+
+  @override
+  String toString() {
+    return 'GridItem{row: $row, column: $column}';
   }
 }
 

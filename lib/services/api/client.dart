@@ -36,7 +36,9 @@ class Client {
 
     final responseData = ResponseData(
         statusCode: response?.statusCode ?? 500,
-        body: response.data.isNotEmpty ? response.data : null);
+        body: response != null
+            && response.data != null
+            && response.data.isNotEmpty ? response.data : null);
     return converter(responseData);
   }
 

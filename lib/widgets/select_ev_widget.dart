@@ -93,33 +93,53 @@ class _SelectEvWidgetState extends State<SelectEvWidget>
   _buildCarItem(EvItem item) {
     return Column(
       children: [
-        ListTile(
-          onTap: () => Provider.of<SelectEvNotifier>(context, listen: false)
-              .onItemTap(item),
-          leading: Container(
-            alignment: Alignment.center,
-            width: 80,
-            padding: const EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8.0),
-              border: Border.all(
-                color: Colors.black,
-                width: 2,
-                style: BorderStyle.solid,
+        Row(
+          children: [
+            Expanded(
+              child: ListTile(
+                onTap: () =>
+                    Provider.of<SelectEvNotifier>(context, listen: false)
+                        .onItemTap(item),
+                leading: Container(
+                  alignment: Alignment.center,
+                  width: 80,
+                  padding: const EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8.0),
+                    border: Border.all(
+                      color: Colors.black,
+                      width: 2,
+                      style: BorderStyle.solid,
+                    ),
+                  ),
+                  child: BoldText(
+                    "${item.brand}",
+                    color: Colors.black,
+                    fontSize: 10,
+                    align: TextAlign.center,
+                  ),
+                ),
+                title: BoldText(
+                  "${item.model}, ${item.year ?? ''}",
+                  color: Colors.black,
+                ),
+                subtitle: _buildPlugs(item),
               ),
             ),
-            child: BoldText(
-              "${item.brand}",
-              color: Colors.black,
-              fontSize: 10,
-              align: TextAlign.center,
-            ),
-          ),
-          title: BoldText(
-            "${item.model}, ${item.year ?? ''}",
-            color: Colors.black,
-          ),
-          subtitle: _buildPlugs(item),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                BoldText(
+                  "Usable kWh",
+                  color: Colors.black,
+                ),
+                RegularText(
+                  "${item.usableBatterySizeInKwh ?? '-'}",
+                  color: Colors.black,
+                ),
+              ],
+            )
+          ],
         ),
         SizedBox(height: 4.0),
       ],
