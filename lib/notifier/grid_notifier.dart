@@ -65,7 +65,7 @@ class GridNotifier extends BaseNotifier
       (index) {
         return GridItem(
           column: index % width,
-          row: (index / width).ceil(),
+          row: (index / width).floor(),
         );
       },
     );
