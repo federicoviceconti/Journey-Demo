@@ -44,6 +44,7 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
             children: [
               _buildGridView(),
               SizedBox(height: 8),
+              _buildSolutionInfo(),
               _buildButtons(),
               _buildData(),
             ],
@@ -183,7 +184,8 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
     );
   }
 
-  _buildLegendItem(GridNotifier notifier, GridSelectionType type, {String append}) {
+  _buildLegendItem(GridNotifier notifier, GridSelectionType type,
+      {String append}) {
     return Row(
       children: [
         Container(
@@ -259,6 +261,10 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
             "Battery size (kWh): ",
             "${notifier.batterySizeKWH ?? ''}",
           ),
+          _buildRowInformation(
+            "kWh/100km: ",
+            "${notifier.averageConsumptionKwh ?? ''}",
+          ),
         ],
       ),
     );
@@ -294,6 +300,34 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
           color: Colors.black,
         ),
       ],
+    );
+  }
+
+  _buildSolutionInfo() {
+    return Consumer<GridNotifier>(
+      builder: (_, notifier, __) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 8.0,
+          ),
+          child: Column(
+            children: [
+              Visibility(
+                visible: notifier.lockClick,
+                child: _buildRowInformation(
+                    "Total km: ", "${notifier.totalSolutionKm}"),
+              ),
+              Visibility(
+                visible: notifier.lockClick,
+                child: _buildRowInformation(
+                  "Necessary kWh/${notifier.totalSolutionKm}km: ",
+                  "${notifier.necessaryKwhForSolution}",
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

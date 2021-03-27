@@ -27,6 +27,8 @@ class GridNotifier extends BaseNotifier
 
   num get batterySizeKWH => _evSelected?.usableBatterySizeInKwh ?? 0;
 
+  num get averageConsumptionKwh => _evSelected?.averageConsumption ?? 0;
+
   List<GridItem> get items => _items;
 
   GridSelectionType currentState = GridSelectionType.none;
@@ -46,6 +48,13 @@ class GridNotifier extends BaseNotifier
   bool _lockClick = false;
 
   bool get lockClick => _lockClick;
+
+  num _totalSolutionKm = 0;
+
+  num get totalSolutionKm => _totalSolutionKm;
+
+  String get necessaryKwhForSolution =>
+      (averageConsumptionKwh * totalSolutionKm / 100).toStringAsFixed(2);
 
   void reload() {
     init();
@@ -299,7 +308,7 @@ class GridNotifier extends BaseNotifier
     try {
       return _items
           .firstWhere((element) => element.row == row && element.column == col);
-    } catch(e) {
+    } catch (e) {
       throw UnsupportedError("no element");
     }
   }
@@ -356,13 +365,14 @@ class GridNotifier extends BaseNotifier
     return d;
   }
 
-  void _buildSolutionPath(List<GridItem> openSet, List<GridItem> closeSet, GridItem current) {
+  void _buildSolutionPath(
+      List<GridItem> openSet, List<GridItem> closeSet, GridItem current) {
     final walkedSet = [...openSet, ...closeSet];
 
     walkedSet.forEach((e) {
-      if(e.selectionType != GridSelectionType.start
-          && e.selectionType != GridSelectionType.wall
-          && e.selectionType != GridSelectionType.end) {
+      if (e.selectionType != GridSelectionType.start &&
+          e.selectionType != GridSelectionType.wall &&
+          e.selectionType != GridSelectionType.end) {
         e.selectionType = GridSelectionType.walked;
       }
     });
@@ -377,9 +387,12 @@ class GridNotifier extends BaseNotifier
     }
 
     path.forEach((e) {
-      if(e.selectionType != GridSelectionType.start && e.selectionType != GridSelectionType.end)
+      if (e.selectionType != GridSelectionType.start &&
+          e.selectionType != GridSelectionType.end)
         e.selectionType = GridSelectionType.solution;
     });
+    _totalSolutionKm = path.length * 10;
+
     notifyListeners();
   }
 }
