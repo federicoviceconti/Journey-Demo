@@ -32,11 +32,14 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
 
   _buildBody() {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.refresh),
-        onPressed: () {
-          Provider.of<GridNotifier>(context, listen: false).reload();
-        },
+      floatingActionButton: Visibility(
+        visible: Provider.of<GridNotifier>(context).calculatingPath,
+        child: FloatingActionButton(
+          child: Icon(Icons.refresh),
+          onPressed: () {
+            Provider.of<GridNotifier>(context, listen: false).reload();
+          },
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -95,55 +98,58 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
   _buildButtons() {
     return Consumer<GridNotifier>(
       builder: (_, notifier, __) {
-        return Row(
-          children: [
-            Spacer(),
-            Visibility(
-              visible: !notifier.lockClick,
-              child: Expanded(
+        return Visibility(
+          visible: !notifier.calculatingPath,
+          child: Row(
+            children: [
+              Spacer(),
+              Visibility(
+                visible: !notifier.lockClick,
+                child: Expanded(
+                  flex: 4,
+                  child: RaisedButton(
+                    child: BoldText(
+                      "Change state",
+                      color: Colors.black,
+                    ),
+                    onPressed: () => notifier.changeStateOnTap(),
+                  ),
+                ),
+              ),
+              Visibility(
+                visible: !notifier.lockClick,
+                child: Spacer(),
+              ),
+              Visibility(
+                visible: !notifier.lockClick,
+                child: Expanded(
+                  flex: 4,
+                  child: RaisedButton(
+                    child: BoldText(
+                      "Calculate",
+                      color: Colors.black,
+                    ),
+                    onPressed: () => notifier.calculatePath(),
+                  ),
+                ),
+              ),
+              Visibility(
+                visible: !notifier.lockClick,
+                child: Spacer(),
+              ),
+              Expanded(
                 flex: 4,
                 child: RaisedButton(
                   child: BoldText(
-                    "Change state",
+                    "Clear all",
                     color: Colors.black,
                   ),
-                  onPressed: () => notifier.changeStateOnTap(),
+                  onPressed: () => notifier.clearAll(),
                 ),
               ),
-            ),
-            Visibility(
-              visible: !notifier.lockClick,
-              child: Spacer(),
-            ),
-            Visibility(
-              visible: !notifier.lockClick,
-              child: Expanded(
-                flex: 4,
-                child: RaisedButton(
-                  child: BoldText(
-                    "Calculate",
-                    color: Colors.black,
-                  ),
-                  onPressed: () => notifier.calculatePath(),
-                ),
-              ),
-            ),
-            Visibility(
-              visible: !notifier.lockClick,
-              child: Spacer(),
-            ),
-            Expanded(
-              flex: 4,
-              child: RaisedButton(
-                child: BoldText(
-                  "Clear all",
-                  color: Colors.black,
-                ),
-                onPressed: () => notifier.clearAll(),
-              ),
-            ),
-            Spacer(),
-          ],
+              Spacer(),
+            ],
+          ),
         );
       },
     );
@@ -264,6 +270,10 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
           _buildRowInformation(
             "kWh/100km: ",
             "${notifier.averageConsumptionKwh ?? ''}",
+          ),
+          _buildRowInformation(
+            "CU available: ",
+            "${notifier.cuAvailable ?? ''}",
           ),
         ],
       ),

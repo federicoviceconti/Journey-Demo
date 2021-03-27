@@ -20,6 +20,10 @@ class GridNotifier extends BaseNotifier
 
   TooltipBundle _tooltipBundle;
 
+  bool _calculatingPath = false;
+
+  bool get calculatingPath => _calculatingPath;
+
   TooltipBundle get tooltipBundle => _tooltipBundle;
 
   bool _allowDiagonal = false;
@@ -58,14 +62,31 @@ class GridNotifier extends BaseNotifier
 
   num get totalSolutionKm => _totalSolutionKm;
 
+  num get cuAvailable => _cuList?.length ?? 0;
+
+  num get _necessaryKwhSolution =>
+      (averageConsumptionKwh * totalSolutionKm / 100);
+
   String get necessaryKwhForSolution =>
-      (averageConsumptionKwh * totalSolutionKm / 100).toStringAsFixed(2);
+      _necessaryKwhSolution.toStringAsFixed(2);
 
   void reload() {
     init();
   }
 
   Future<void> init() async {
+    final itemGenerated = List.generate(
+      width * height,
+          (index) {
+        return GridItem(
+          column: index % width,
+          row: (index / width).floor(),
+        );
+      },
+    );
+
+    _items = itemGenerated;
+
     showLoader();
 
     _evSelected = SessionManager.instance.evSelected;
@@ -76,18 +97,6 @@ class GridNotifier extends BaseNotifier
       ),
       maxResult: 5,
     );
-
-    final itemGenerated = List.generate(
-      width * height,
-      (index) {
-        return GridItem(
-          column: index % width,
-          row: (index / width).floor(),
-        );
-      },
-    );
-
-    _items = itemGenerated;
 
     hideLoader();
   }
@@ -260,6 +269,7 @@ class GridNotifier extends BaseNotifier
 
   void calculatePath() async {
     _lockClick = true;
+    _calculatingPath = true;
     notifyListeners();
 
     _initSpots();
@@ -306,12 +316,20 @@ class GridNotifier extends BaseNotifier
           }
         }
 
-        _buildSolutionPath(openSet, closeSet, current);
+        _buildWalkPath(openSet, closeSet);
+        final path = _buildPathForSolution(current);
+        _totalSolutionKm = path.length * AppConstants.KM_MULTIPLIER;
+
         await Future.delayed(Duration(
           milliseconds: AppConstants.DELAY_ANIMATION_SOLUTION,
         ));
+
+        notifyListeners();
       }
     }
+
+    _calculatingPath = false;
+    notifyListeners();
   }
 
   GridItem _getItemFromGridFromRowAndCols(int row, int col) {
@@ -375,8 +393,8 @@ class GridNotifier extends BaseNotifier
     return d;
   }
 
-  void _buildSolutionPath(
-      List<GridItem> openSet, List<GridItem> closeSet, GridItem current) {
+  void _buildWalkPath(
+      List<GridItem> openSet, List<GridItem> closeSet) {
     final walkedSet = [...openSet, ...closeSet];
 
     walkedSet.forEach((e) {
@@ -386,9 +404,11 @@ class GridNotifier extends BaseNotifier
         e.selectionType = GridSelectionType.walked;
       }
     });
+  }
 
+  List<GridItem> _buildPathForSolution(GridItem end) {
     final path = <GridItem>[];
-    GridItem temp = current;
+    GridItem temp = end;
     path.add(temp);
 
     while (temp.spot.previous != null) {
@@ -401,8 +421,7 @@ class GridNotifier extends BaseNotifier
           e.selectionType != GridSelectionType.end)
         e.selectionType = GridSelectionType.solution;
     });
-    _totalSolutionKm = path.length * AppConstants.KM_MULTIPLIER;
 
-    notifyListeners();
+    return path;
   }
 }
