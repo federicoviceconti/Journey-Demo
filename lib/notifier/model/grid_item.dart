@@ -24,13 +24,13 @@ class GridItem {
     if (row > 0) {
       neighbors.add(Tuple2.fromList([row - 1, column]));
     }
-    if (row < maxRows) {
+    if ((row + 1) < maxRows) {
       neighbors.add(Tuple2.fromList([row + 1, column]));
     }
     if (column > 0) {
       neighbors.add(Tuple2.fromList([row, column - 1]));
     }
-    if (column < maxCols) {
+    if ((column + 1) < maxCols) {
       neighbors.add(Tuple2.fromList([row, column + 1]));
     }
 

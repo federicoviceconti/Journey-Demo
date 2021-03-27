@@ -80,7 +80,7 @@ class GridNotifier extends BaseNotifier
   }
 
   void onGridTap(GridItem item) {
-    if(lockClick) return;
+    if (lockClick) return;
 
     if (tooltipBundle == null) {
       switch (currentState) {
@@ -160,7 +160,7 @@ class GridNotifier extends BaseNotifier
   }
 
   changeStateOnTap() {
-    if(lockClick) return;
+    if (lockClick) return;
 
     if (currentState == GridSelectionType.start ||
         currentState == GridSelectionType.end) {
@@ -265,24 +265,22 @@ class GridNotifier extends BaseNotifier
         openSet.remove(current);
         closeSet.add(current);
 
-        final neighbors = current.getNeighbors(
-          maxRows: width,
-          maxCols: height,
-        );
+        final neighbors = current.getNeighbors(maxRows: height, maxCols: width);
 
         for (final tupleItem in neighbors) {
-          final gridItem =
+          final neighbor =
               _getItemFromGridFromRowAndCols(tupleItem.item1, tupleItem.item2);
 
-          if(!closeSet.contains(gridItem)) {
-            final tentativeGScore = gridItem.spot.g + _heuristic(current, gridItem);
+          if (!closeSet.contains(neighbor)) {
+            final tentativeGScore =
+                neighbor.spot.g + _heuristic(current, neighbor);
 
-            if(!openSet.contains(gridItem)) {
-              openSet.add(gridItem);
-            } else if (tentativeGScore < gridItem.spot.g) {
-              gridItem.spot.g = tentativeGScore;
-              gridItem.spot.h = _heuristic(current, gridItem);
-              gridItem.spot.f = gridItem.spot.g + gridItem.spot.h;
+            if (!openSet.contains(neighbor)) {
+              openSet.add(neighbor);
+            } else if (tentativeGScore <= neighbor.spot.g) {
+              neighbor.spot.g = tentativeGScore;
+              neighbor.spot.h = _heuristic(current, end);
+              neighbor.spot.f = neighbor.spot.g + neighbor.spot.h;
 
               cameFrom.add(current);
             }
@@ -291,11 +289,27 @@ class GridNotifier extends BaseNotifier
       }
 
       print("No solution :(\n$closeSet");
+
+      closeSet.forEach((e) {
+        if(e.selectionType != GridSelectionType.start)
+          e.selectionType = GridSelectionType.walked;
+      });
+      cameFrom.forEach((e) {
+        e.selectionType = GridSelectionType.cu;
+      });
+
+      notifyListeners();
     }
   }
 
-  GridItem _getItemFromGridFromRowAndCols(int row, int col) =>
-      _items[row + col];
+  GridItem _getItemFromGridFromRowAndCols(int row, int col) {
+    try {
+      return _items
+          .firstWhere((element) => element.row == row && element.column == col);
+    } catch(e) {
+      throw UnsupportedError("no element");
+    }
+  }
 
   void _initSpots() {
     _items.forEach((element) {
@@ -309,11 +323,27 @@ class GridNotifier extends BaseNotifier
   }
 
   GridItem _getLowestFScoreFromSet(List<GridItem> openSet) {
-    return openSet.reduce(
-      (value, element) {
-        return value.spot.f < element.spot.f ? value : element;
-      },
-    );
+    var winner = 0;
+    for (var i = 1; i < openSet.length; i++) {
+      if (openSet[i].spot.f < openSet[winner].spot.f) {
+        winner = i;
+      }
+
+      if (openSet[i].spot.f == openSet[winner].spot.f) {
+        if (openSet[i].spot.g > openSet[winner].spot.g) {
+          winner = i;
+        }
+
+        /*if (!this.allowDiagonals) {
+          if (this.openSet[i].g == this.openSet[winner].g &&
+              this.openSet[i].vh < this.openSet[winner].vh) {
+            winner = i;
+          }
+        }*/
+      }
+    }
+
+    return openSet[winner];
   }
 
   num _dist(GridItem current, GridItem gridItem) {
@@ -323,7 +353,7 @@ class GridNotifier extends BaseNotifier
   }
 
   num _heuristic(GridItem current, GridItem gridItem) {
-    var d;
+    int d;
     if (_allowDiagonal) {
       d = _dist(current, gridItem);
     } else {
