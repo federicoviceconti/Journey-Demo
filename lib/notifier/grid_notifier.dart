@@ -377,7 +377,7 @@ class GridNotifier extends BaseNotifier
     }
 
     path.forEach((e) {
-      if(e.selectionType != GridSelectionType.start || e.selectionType != GridSelectionType.end)
+      if(e.selectionType != GridSelectionType.start && e.selectionType != GridSelectionType.end)
         e.selectionType = GridSelectionType.solution;
     });
     notifyListeners();
