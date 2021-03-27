@@ -308,11 +308,13 @@ class GridNotifier extends BaseNotifier
               openSet.add(neighbor);
             }
 
-            neighbor.spot.g = tentativeGScore;
-            neighbor.spot.h = _heuristic(current, end);
-            neighbor.spot.f = neighbor.spot.g + neighbor.spot.h;
+            if(tentativeGScore <= neighbor.spot.g) {
+              neighbor.spot.g = tentativeGScore;
+              neighbor.spot.h = _heuristic(current, end);
+              neighbor.spot.f = neighbor.spot.g + neighbor.spot.h;
 
-            neighbor.spot.previous = current;
+              neighbor.spot.previous = current;
+            }
           }
         }
 
@@ -386,8 +388,8 @@ class GridNotifier extends BaseNotifier
     if (_allowDiagonal) {
       d = _dist(current, gridItem);
     } else {
-      d = (current.row - gridItem.row).abs() +
-          (current.column - gridItem.column).abs();
+      d = (current.row - gridItem.row) +
+          (current.column - gridItem.column);
     }
 
     return d;
