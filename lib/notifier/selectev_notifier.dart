@@ -2,12 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:get_it/get_it.dart';
 import 'package:journey_demo/navigation/mixin/mixin_route.dart';
 import 'package:journey_demo/notifier/base_notifier.dart';
+import 'package:journey_demo/notifier/mixin/ev_mixin.dart';
 import 'package:journey_demo/notifier/mixin/mixin_loader_notifier.dart';
 import 'package:journey_demo/services/ev/ev_service.dart';
 import 'package:journey_demo/services/ev/response/ev_list_response.dart';
 
 class SelectEvNotifier extends BaseNotifier
-    with RouteMixin, LoaderNotifierMixin {
+    with RouteMixin, LoaderNotifierMixin, EvMixin {
   final searchController = TextEditingController();
 
   List<EvItem> _evList;
@@ -24,8 +25,8 @@ class SelectEvNotifier extends BaseNotifier
       onTextSearchChanged();
     });
 
-    final service = GetIt.instance<EvService>();
-    final responseCarList = await service.getCars();
+    final responseCarList = await getCars();
+
     if (responseCarList.items.isNotEmpty) {
       _evList = responseCarList.items;
       _filterEvList = [..._evList];

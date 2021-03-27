@@ -7,7 +7,7 @@ import 'package:journey_demo/common/widget/base_widget.dart';
 import 'package:journey_demo/notifier/model/plug_type.dart';
 import 'package:journey_demo/notifier/selectev_notifier.dart';
 import 'package:journey_demo/services/ev/response/ev_list_response.dart';
-import 'package:journey_demo/widgets/search_box.dart';
+import 'package:journey_demo/common/widget/search_box.dart';
 import 'package:provider/provider.dart';
 
 class SelectEvWidget extends StatefulWidget {
