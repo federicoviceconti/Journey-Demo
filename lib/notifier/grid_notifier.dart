@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:journey_demo/environment/app_constants.dart';
 import 'package:journey_demo/environment/session_manager.dart';
 import 'package:journey_demo/notifier/base_notifier.dart';
 import 'package:journey_demo/notifier/mixin/mixin_loader_notifier.dart';
@@ -35,9 +36,13 @@ class GridNotifier extends BaseNotifier
 
   EvItem _evSelected;
 
-  int get width => 10;
+  int _width = 10;
 
-  int get height => 12;
+  int get width => _width;
+
+  int _height = 12;
+
+  int get height => _height;
 
   String get evNameTotal => _evSelected == null
       ? ''
@@ -65,7 +70,10 @@ class GridNotifier extends BaseNotifier
 
     _evSelected = SessionManager.instance.evSelected;
     _cuList = await getChargingStationsAndConvertToItem(
-      startingPoint: LatLng(42, 12),
+      startingPoint: LatLng(
+        AppConstants.START_POINT_LAT,
+        AppConstants.START_POINT_LNG,
+      ),
       maxResult: 5,
     );
 
@@ -299,7 +307,9 @@ class GridNotifier extends BaseNotifier
         }
 
         _buildSolutionPath(openSet, closeSet, current);
-        await Future.delayed(Duration(milliseconds: 10));
+        await Future.delayed(Duration(
+          milliseconds: AppConstants.DELAY_ANIMATION_SOLUTION,
+        ));
       }
     }
   }
@@ -309,7 +319,7 @@ class GridNotifier extends BaseNotifier
       return _items
           .firstWhere((element) => element.row == row && element.column == col);
     } catch (e) {
-      throw UnsupportedError("no element");
+      throw UnsupportedError("No element inside grid at ($row,$col)");
     }
   }
 
@@ -391,7 +401,7 @@ class GridNotifier extends BaseNotifier
           e.selectionType != GridSelectionType.end)
         e.selectionType = GridSelectionType.solution;
     });
-    _totalSolutionKm = path.length * 10;
+    _totalSolutionKm = path.length * AppConstants.KM_MULTIPLIER;
 
     notifyListeners();
   }
