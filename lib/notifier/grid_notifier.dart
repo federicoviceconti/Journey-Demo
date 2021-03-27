@@ -208,6 +208,8 @@ class GridNotifier extends BaseNotifier
         return "CU";
       case GridSelectionType.walked:
         return "Walked";
+      case GridSelectionType.solution:
+        return "Solution";
       default:
         return "";
     }
@@ -358,8 +360,11 @@ class GridNotifier extends BaseNotifier
     final walkedSet = [...openSet, ...closeSet];
 
     walkedSet.forEach((e) {
-      if(e.selectionType != GridSelectionType.start && e.selectionType != GridSelectionType.wall)
+      if(e.selectionType != GridSelectionType.start
+          && e.selectionType != GridSelectionType.wall
+          && e.selectionType != GridSelectionType.end) {
         e.selectionType = GridSelectionType.walked;
+      }
     });
 
     final path = <GridItem>[];

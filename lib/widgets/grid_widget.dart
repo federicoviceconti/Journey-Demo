@@ -183,7 +183,7 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
     );
   }
 
-  _buildLegendItem(GridNotifier notifier, GridSelectionType type) {
+  _buildLegendItem(GridNotifier notifier, GridSelectionType type, {String append}) {
     return Row(
       children: [
         Container(
@@ -200,7 +200,7 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
         ),
         SizedBox(width: 5),
         RegularText(
-          "${notifier.getTextBySelectionType(type)}",
+          "${notifier.getTextBySelectionType(type)}${append ?? ''}",
           color: Colors.black,
         ),
       ],
@@ -217,12 +217,12 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
             color: Colors.black,
           ),
           SizedBox(height: 4),
-          _buildLegendItem(notifier, GridSelectionType.start),
-          _buildLegendItem(notifier, GridSelectionType.end),
+          _buildLegendItem(notifier, GridSelectionType.start, append: "/End"),
           _buildLegendItem(notifier, GridSelectionType.wall),
           _buildLegendItem(notifier, GridSelectionType.path),
           _buildLegendItem(notifier, GridSelectionType.walked),
           _buildLegendItem(notifier, GridSelectionType.cu),
+          _buildLegendItem(notifier, GridSelectionType.solution),
           _buildLegendItem(notifier, GridSelectionType.none),
         ],
       ),
