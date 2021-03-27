@@ -143,6 +143,8 @@ class GridNotifier extends BaseNotifier
         return Colors.green;
       case GridSelectionType.walked:
         return Colors.yellow;
+      case GridSelectionType.solution:
+        return Colors.lightBlue;
       default:
         throw UnsupportedError("Type not found!");
     }
@@ -237,7 +239,7 @@ class GridNotifier extends BaseNotifier
     notifyListeners();
   }
 
-  void calculatePath() {
+  void calculatePath() async {
     _lockClick = true;
     notifyListeners();
 
@@ -252,13 +254,11 @@ class GridNotifier extends BaseNotifier
       final List<GridItem> closeSet = _items
           .where((item) => item.selectionType == GridSelectionType.wall)
           .toList();
-      final List<GridItem> cameFrom = [];
 
       while (openSet.isNotEmpty) {
         current = _getLowestFScoreFromSet(openSet);
 
         if (current == end) {
-          debugPrint("END!");
           break;
         }
 
@@ -273,32 +273,23 @@ class GridNotifier extends BaseNotifier
 
           if (!closeSet.contains(neighbor)) {
             final tentativeGScore =
-                neighbor.spot.g + _heuristic(current, neighbor);
+                current.spot.g + _heuristic(current, neighbor);
 
             if (!openSet.contains(neighbor)) {
               openSet.add(neighbor);
-            } else if (tentativeGScore <= neighbor.spot.g) {
-              neighbor.spot.g = tentativeGScore;
-              neighbor.spot.h = _heuristic(current, end);
-              neighbor.spot.f = neighbor.spot.g + neighbor.spot.h;
-
-              cameFrom.add(current);
             }
+
+            neighbor.spot.g = tentativeGScore;
+            neighbor.spot.h = _heuristic(current, end);
+            neighbor.spot.f = neighbor.spot.g + neighbor.spot.h;
+
+            neighbor.spot.previous = current;
           }
         }
+
+        _buildSolutionPath(openSet, closeSet, current);
+        await Future.delayed(Duration(milliseconds: 10));
       }
-
-      print("No solution :(\n$closeSet");
-
-      closeSet.forEach((e) {
-        if(e.selectionType != GridSelectionType.start && e.selectionType != GridSelectionType.wall)
-          e.selectionType = GridSelectionType.walked;
-      });
-      cameFrom.forEach((e) {
-        e.selectionType = GridSelectionType.cu;
-      });
-
-      notifyListeners();
     }
   }
 
@@ -361,5 +352,29 @@ class GridNotifier extends BaseNotifier
     }
 
     return d;
+  }
+
+  void _buildSolutionPath(List<GridItem> openSet, List<GridItem> closeSet, GridItem current) {
+    final walkedSet = [...openSet, ...closeSet];
+
+    walkedSet.forEach((e) {
+      if(e.selectionType != GridSelectionType.start && e.selectionType != GridSelectionType.wall)
+        e.selectionType = GridSelectionType.walked;
+    });
+
+    final path = <GridItem>[];
+    GridItem temp = current;
+    path.add(temp);
+
+    while (temp.spot.previous != null) {
+      path.add(temp.spot.previous);
+      temp = temp.spot.previous;
+    }
+
+    path.forEach((e) {
+      if(e.selectionType != GridSelectionType.start || e.selectionType != GridSelectionType.end)
+        e.selectionType = GridSelectionType.solution;
+    });
+    notifyListeners();
   }
 }

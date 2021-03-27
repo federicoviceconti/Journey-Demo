@@ -47,6 +47,7 @@ class Spot {
   int f;
   int g;
   int h;
+  GridItem previous;
 
   Spot({
     this.f,
@@ -61,4 +62,4 @@ class Spot {
   }
 }
 
-enum GridSelectionType { none, start, end, path, wall, cu, walked }
+enum GridSelectionType { none, start, end, path, wall, cu, walked, solution }
