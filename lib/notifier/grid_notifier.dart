@@ -291,7 +291,7 @@ class GridNotifier extends BaseNotifier
       print("No solution :(\n$closeSet");
 
       closeSet.forEach((e) {
-        if(e.selectionType != GridSelectionType.start)
+        if(e.selectionType != GridSelectionType.start && e.selectionType != GridSelectionType.wall)
           e.selectionType = GridSelectionType.walked;
       });
       cameFrom.forEach((e) {
@@ -334,12 +334,11 @@ class GridNotifier extends BaseNotifier
           winner = i;
         }
 
-        /*if (!this.allowDiagonals) {
-          if (this.openSet[i].g == this.openSet[winner].g &&
-              this.openSet[i].vh < this.openSet[winner].vh) {
+        if (!_allowDiagonal) {
+          if (openSet[i].spot.g == openSet[winner].spot.g) {
             winner = i;
           }
-        }*/
+        }
       }
     }
 
