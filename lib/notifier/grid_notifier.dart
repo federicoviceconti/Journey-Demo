@@ -7,6 +7,8 @@ import 'package:journey_demo/environment/session_manager.dart';
 import 'package:journey_demo/navigation/bundle/route_detail_bundle.dart';
 import 'package:journey_demo/navigation/routes.dart';
 import 'package:journey_demo/notifier/base_notifier.dart';
+import 'package:journey_demo/notifier/mixin/a_star_mixin.dart';
+import 'package:journey_demo/notifier/mixin/grid_mixin.dart';
 import 'package:journey_demo/notifier/mixin/mixin_loader_notifier.dart';
 import 'package:journey_demo/notifier/model/grid_item.dart';
 import 'package:journey_demo/notifier/model/map_item.dart';
@@ -16,7 +18,7 @@ import 'package:journey_demo/services/ev/response/ev_list_response.dart';
 import 'mixin/charge_map_mixin.dart';
 
 class GridNotifier extends BaseNotifier
-    with LoaderNotifierMixin, ChargeMapMixin {
+    with LoaderNotifierMixin, ChargeMapMixin, AStarMixin, GridMixin {
   List<GridItem> _items = [];
   List<StationItem> _cuList = [];
 
@@ -225,7 +227,7 @@ class GridNotifier extends BaseNotifier
   }
 
   bool _containsTypeFromList(GridSelectionType type) {
-    final item = _getElementByType(type);
+    final item = getElementByType(_items, type);
 
     return item != null;
   }
@@ -284,212 +286,54 @@ class GridNotifier extends BaseNotifier
     _calculatingPath = true;
     notifyListeners();
 
-    int retryCount = 0;
-    while (retryCount < 1) {
-      _initSpots();
+    final cuElements = getElementsByType(items, GridSelectionType.cu)
+        .map((e) => e.selectionType)
+        .toList();
 
-      GridItem current;
-      GridItem start = _getElementByType(GridSelectionType.start);
-      GridItem end = _getElementByType(GridSelectionType.cu);
-
-      if (start != null && end != null) {
-        List<GridItem> openSet = [start];
-        final List<GridItem> closeSet = _items
-            .where((item) => item.selectionType == GridSelectionType.wall)
-            .toList();
-
-        _solutions.forEach((element) {
-          if (element.length > 1) {
-            final toAdd = element[1];
-
-            if (!closeSet.contains(toAdd)) {
-              closeSet.add(toAdd);
-            }
-          }
-        });
-
-        List<GridItem> singleSolution = [];
-
-        while (openSet.isNotEmpty) {
-          current = _getLowestFScoreFromSet(openSet);
-
-          if (current == end) {
-            print("$current, $end");
-
-            if (current.selectionType == GridSelectionType.cu) {
-              end = _getElementByType(GridSelectionType.end);
-            } else {
-              print("END!");
-              singleSolution.insert(0, start);
-              singleSolution.insert(singleSolution.length - 1, end);
-              _solutions.add(singleSolution);
-              break;
-            }
-          }
-
-          openSet.remove(current);
-          closeSet.add(current);
-
-          final neighbors =
-              current.getNeighbors(maxRows: height, maxCols: width);
-
-          for (final tupleItem in neighbors) {
-            final neighbor = _getItemFromGridFromRowAndCols(
-                tupleItem.item1, tupleItem.item2);
-
-            if (!closeSet.contains(neighbor)) {
-              final tentativeGScore =
-                  current.spot.g + _heuristic(current, neighbor);
-
-              if (!openSet.contains(neighbor)) {
-                openSet.add(neighbor);
-              }
-
-              if (tentativeGScore <= neighbor.spot.g) {
-                neighbor.spot.g = tentativeGScore;
-                neighbor.spot.h = _heuristic(current, end);
-                neighbor.spot.f = neighbor.spot.g + neighbor.spot.h;
-
-                neighbor.spot.previous = current;
-              }
-            }
-          }
-
-          _buildWalkPath(openSet, closeSet);
-          singleSolution = _buildPathForSolution(current);
-          _setTotalKm(singleSolution);
-
-          await Future.delayed(Duration(
-            milliseconds: AppConstants.DELAY_ANIMATION_SOLUTION,
-          ));
-
-          notifyListeners();
-        }
-      }
-
-      retryCount++;
-    }
-
-    _initSpots();
+    _solutions = await calculateAStar(
+      allItems: _items,
+      stepsToSearch: [
+        ...cuElements,
+        GridSelectionType.end,
+      ],
+      allowDiagonal: _allowDiagonal,
+      width: _width,
+      height: _height,
+      delay: AppConstants.DELAY_ANIMATION_SOLUTION,
+      onIntermediateStepDone: onIntermediateStepDone,
+    );
 
     _calculatingPath = false;
     notifyListeners();
   }
 
-  GridItem _getItemFromGridFromRowAndCols(int row, int col) {
-    try {
-      return _items
-          .firstWhere((element) => element.row == row && element.column == col);
-    } catch (e) {
-      throw UnsupportedError("No element inside grid at ($row,$col)");
-    }
-  }
-
-  void _initSpots() {
-    _items.forEach((element) {
-      element.spot = Spot.zeroCost();
-
-      element.selectionType =
-          element.selectionType == GridSelectionType.solution
-              ? GridSelectionType.walked
-              : element.selectionType;
-    });
-  }
-
-  GridItem _getElementByType(GridSelectionType type) {
-    return _items.firstWhere((element) => element.selectionType == type,
-        orElse: () => null);
-  }
-
-  GridItem _getLowestFScoreFromSet(List<GridItem> openSet) {
-    var winner = 0;
-    for (var i = 1; i < openSet.length; i++) {
-      if (openSet[i].spot.f < openSet[winner].spot.f) {
-        winner = i;
-      }
-
-      if (openSet[i].spot.f == openSet[winner].spot.f) {
-        if (openSet[i].spot.g > openSet[winner].spot.g) {
-          winner = i;
-        }
-
-        if (!_allowDiagonal) {
-          if (openSet[i].spot.g == openSet[winner].spot.g) {
-            winner = i;
-          }
-        }
-      }
-    }
-
-    return openSet[winner];
-  }
-
-  num _dist(GridItem current, GridItem gridItem) {
-    final x = gridItem.row - gridItem.row;
-    final y = gridItem.column - gridItem.column;
-    return sqrt(pow(x, 2) + pow(y, 2));
-  }
-
-  num _heuristic(GridItem current, GridItem gridItem) {
-    int d;
-    if (_allowDiagonal) {
-      d = _dist(current, gridItem);
-    } else {
-      d = (current.row - gridItem.row) + (current.column - gridItem.column);
-    }
-
-    return d;
-  }
-
-  void _buildWalkPath(List<GridItem> openSet, List<GridItem> closeSet) {
-    final walkedSet = [...openSet, ...closeSet];
-
-    walkedSet.forEach((e) {
-      if (e.selectionType != GridSelectionType.start &&
-          e.selectionType != GridSelectionType.wall &&
-          e.selectionType != GridSelectionType.cu &&
-          e.selectionType != GridSelectionType.end) {
-        e.selectionType = GridSelectionType.walked;
-      }
-    });
-  }
-
-  List<GridItem> _buildPathForSolution(GridItem end) {
-    final path = <GridItem>[];
-    GridItem temp = end;
-    path.add(temp);
-
-    while (temp.spot.previous != null) {
-      path.add(temp.spot.previous);
-      temp = temp.spot.previous;
-    }
-
-    _setPathSolution(path);
-
-    return path;
-  }
-
   onSolutionTap(int index) {
-    _initSpots();
+    initSpots(_items);
 
     final solution = solutions[index];
 
-    _setPathSolution(solution);
+    markPathAsSolution(solution);
     _setTotalKm(solution);
   }
 
-  void _setTotalKm(List<GridItem> singleSolution) {
-    _totalSolutionKm = singleSolution.length * AppConstants.KM_MULTIPLIER;
+  void onIntermediateStepDone(List<GridItem> singleSolution) {
+    markPathAsSolution(singleSolution);
+    _setTotalKm(singleSolution);
     notifyListeners();
   }
 
-  void _setPathSolution(List<GridItem> path) {
+  void markPathAsSolution(List<GridItem> path) {
     path.forEach((e) {
       if (e.selectionType != GridSelectionType.start &&
           e.selectionType != GridSelectionType.cu &&
           e.selectionType != GridSelectionType.end)
         e.selectionType = GridSelectionType.solution;
     });
+  }
+
+  void _setTotalKm(List<GridItem> singleSolution) {
+    _totalSolutionKm = singleSolution.length * AppConstants.KM_MULTIPLIER;
+    notifyListeners();
   }
 
   onTripDetail(int index) {
