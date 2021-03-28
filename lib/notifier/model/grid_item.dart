@@ -60,6 +60,13 @@ class Spot {
     this.g = 0;
     this.h = 0;
   }
+
+  Spot.zeroCostWithPrevious(GridItem previous) {
+    this.f = 0;
+    this.g = 0;
+    this.h = 0;
+    this.previous = previous;
+  }
 }
 
 enum GridSelectionType { none, start, end, path, wall, cu, walked, solution }

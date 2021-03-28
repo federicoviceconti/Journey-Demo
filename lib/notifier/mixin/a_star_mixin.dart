@@ -34,7 +34,11 @@ mixin AStarMixin implements GridMixin {
         if (current == end) {
           if (stepsToSearch.isNotEmpty) {
             openSet = [current];
-            end = getElementByType(allItems, stepsToSearch.removeAt(0));
+            end = getElementByType(allItems, stepsToSearch.removeAt(0), excludes: end);
+
+            allItems.forEach((element) {
+              element.spot = Spot.zeroCostWithPrevious(element.spot.previous);
+            });
           } else {
             singleSolution.insert(0, start);
             singleSolution.insert(singleSolution.length - 1, end);
