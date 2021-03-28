@@ -39,7 +39,7 @@ class GridItem {
 
   @override
   String toString() {
-    return 'GridItem{row: $row, column: $column}';
+    return 'GridItem{row: $row, column: $column, selectionType: $selectionType}';
   }
 }
 

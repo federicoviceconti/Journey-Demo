@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:journey_demo/navigation/bundle/alert_bundle.dart';
+import 'package:journey_demo/navigation/bundle/route_detail_bundle.dart';
 import 'package:journey_demo/notifier/alert_notifier.dart';
 import 'package:journey_demo/notifier/create_ev_notifier.dart';
 import 'package:journey_demo/notifier/grid_notifier.dart';
 import 'package:journey_demo/notifier/map_notifier.dart';
 import 'package:journey_demo/notifier/onboarding_notifier.dart';
+import 'package:journey_demo/notifier/route_detail_notifier.dart';
 import 'package:journey_demo/notifier/selectev_notifier.dart';
 import 'package:journey_demo/widgets/alert_widget.dart';
 import 'package:journey_demo/widgets/grid_widget.dart';
 import 'package:journey_demo/widgets/map_widget.dart';
 import 'package:journey_demo/widgets/onboarding_widget.dart';
 import 'package:journey_demo/widgets/create_ev_widget.dart';
+import 'package:journey_demo/widgets/route_detail_widget.dart';
 import 'package:journey_demo/widgets/select_ev_widget.dart';
 import 'package:provider/provider.dart';
 
@@ -54,6 +57,14 @@ class Routes {
           child: GridWidget(),
         );
       },
+      RouteEnum.routeDetail.name: (context) {
+        RouteDetailBundle bundle = ModalRoute.of(context).settings.arguments;
+
+        return ChangeNotifierProvider(
+          create: (_) => RouteDetailNotifier(routeDetailBundle: bundle),
+          child: RouteDetailWidget(),
+        );
+      },
     };
   }
 
@@ -66,7 +77,8 @@ enum RouteEnum {
   selectEv,
   alert,
   map,
-  grid
+  grid,
+  routeDetail,
 }
 
 extension RouteExtension on RouteEnum {
@@ -78,6 +90,7 @@ extension RouteExtension on RouteEnum {
       RouteEnum.alert: '/alert',
       RouteEnum.map: '/map',
       RouteEnum.grid: '/grid',
+      RouteEnum.routeDetail: '/routeDetail',
     }[this];
   }
 }

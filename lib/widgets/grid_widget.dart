@@ -32,14 +32,11 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
 
   _buildBody() {
     return Scaffold(
-      floatingActionButton: Visibility(
-        visible: Provider.of<GridNotifier>(context).calculatingPath,
-        child: FloatingActionButton(
-          child: Icon(Icons.refresh),
-          onPressed: () {
-            Provider.of<GridNotifier>(context, listen: false).reload();
-          },
-        ),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.refresh),
+        onPressed: () {
+          Provider.of<GridNotifier>(context, listen: false).reload();
+        },
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -49,6 +46,7 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
               SizedBox(height: 8),
               _buildSolutionInfo(),
               _buildButtons(),
+              _buildSolutions(),
               _buildData(),
             ],
           ),
@@ -338,6 +336,55 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
           ),
         );
       },
+    );
+  }
+
+  _buildSolutions() {
+    return Consumer<GridNotifier>(
+      builder: (_, notifier, __) {
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              BoldText("Solutions:", color: Colors.black),
+              SizedBox(height: 4),
+              ListView.separated(
+                physics: NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                itemBuilder: (_, index) => _buildSolutionItem(
+                  index,
+                  notifier,
+                ),
+                separatorBuilder: (_, __) => Divider(),
+                itemCount: notifier.solutions.length,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  _buildSolutionItem(int index, GridNotifier notifier) {
+    return GestureDetector(
+      onTap: () => notifier.onSolutionTap(index),
+      child: Row(
+        children: [
+          Expanded(
+            child: RegularText(
+              "Solution #$index len ${notifier.solutions[index].length}",
+              color: Colors.black,
+            ),
+          ),
+          RaisedButton(
+            onPressed: () => notifier.onTripDetail(index),
+            color: Colors.white,
+            elevation: 2,
+            child: BoldText("Show trip detail", color: Colors.black),
+          )
+        ],
+      ),
     );
   }
 }

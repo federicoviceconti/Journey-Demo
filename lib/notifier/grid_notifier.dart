@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:journey_demo/environment/app_constants.dart';
 import 'package:journey_demo/environment/session_manager.dart';
+import 'package:journey_demo/navigation/bundle/route_detail_bundle.dart';
+import 'package:journey_demo/navigation/routes.dart';
 import 'package:journey_demo/notifier/base_notifier.dart';
 import 'package:journey_demo/notifier/mixin/mixin_loader_notifier.dart';
 import 'package:journey_demo/notifier/model/grid_item.dart';
@@ -70,14 +72,19 @@ class GridNotifier extends BaseNotifier
   String get necessaryKwhForSolution =>
       _necessaryKwhSolution.toStringAsFixed(2);
 
+  List<List<GridItem>> _solutions = [];
+
+  List<List<GridItem>> get solutions => _solutions;
+
   void reload() {
+    clearAll();
     init();
   }
 
   Future<void> init() async {
     final itemGenerated = List.generate(
       width * height,
-          (index) {
+      (index) {
         return GridItem(
           column: index % width,
           row: (index / width).floor(),
@@ -90,13 +97,16 @@ class GridNotifier extends BaseNotifier
     showLoader();
 
     _evSelected = SessionManager.instance.evSelected;
-    _cuList = await getChargingStationsAndConvertToItem(
-      startingPoint: LatLng(
-        AppConstants.START_POINT_LAT,
-        AppConstants.START_POINT_LNG,
-      ),
-      maxResult: 5,
-    );
+
+    if (_cuList.isEmpty) {
+      _cuList = await getChargingStationsAndConvertToItem(
+        startingPoint: LatLng(
+          AppConstants.START_POINT_LAT,
+          AppConstants.START_POINT_LNG,
+        ),
+        maxResult: 5,
+      );
+    }
 
     hideLoader();
   }
@@ -184,6 +194,8 @@ class GridNotifier extends BaseNotifier
 
     currentState = GridSelectionType.none;
     _lockClick = false;
+    _calculatingPath = false;
+    _solutions = [];
     notifyListeners();
   }
 
@@ -272,63 +284,93 @@ class GridNotifier extends BaseNotifier
     _calculatingPath = true;
     notifyListeners();
 
-    _initSpots();
+    int retryCount = 0;
+    while (retryCount < 1) {
+      _initSpots();
 
-    GridItem current;
-    final GridItem start = _getElementByType(GridSelectionType.start);
-    final GridItem end = _getElementByType(GridSelectionType.end);
+      GridItem current;
+      GridItem start = _getElementByType(GridSelectionType.start);
+      GridItem end = _getElementByType(GridSelectionType.cu);
 
-    if (start != null && end != null) {
-      final List<GridItem> openSet = [start];
-      final List<GridItem> closeSet = _items
-          .where((item) => item.selectionType == GridSelectionType.wall)
-          .toList();
+      if (start != null && end != null) {
+        List<GridItem> openSet = [start];
+        final List<GridItem> closeSet = _items
+            .where((item) => item.selectionType == GridSelectionType.wall)
+            .toList();
 
-      while (openSet.isNotEmpty) {
-        current = _getLowestFScoreFromSet(openSet);
+        _solutions.forEach((element) {
+          if (element.length > 1) {
+            final toAdd = element[1];
 
-        if (current == end) {
-          break;
-        }
-
-        openSet.remove(current);
-        closeSet.add(current);
-
-        final neighbors = current.getNeighbors(maxRows: height, maxCols: width);
-
-        for (final tupleItem in neighbors) {
-          final neighbor =
-              _getItemFromGridFromRowAndCols(tupleItem.item1, tupleItem.item2);
-
-          if (!closeSet.contains(neighbor)) {
-            final tentativeGScore =
-                current.spot.g + _heuristic(current, neighbor);
-
-            if (!openSet.contains(neighbor)) {
-              openSet.add(neighbor);
-            }
-
-            if(tentativeGScore <= neighbor.spot.g) {
-              neighbor.spot.g = tentativeGScore;
-              neighbor.spot.h = _heuristic(current, end);
-              neighbor.spot.f = neighbor.spot.g + neighbor.spot.h;
-
-              neighbor.spot.previous = current;
+            if (!closeSet.contains(toAdd)) {
+              closeSet.add(toAdd);
             }
           }
+        });
+
+        List<GridItem> singleSolution = [];
+
+        while (openSet.isNotEmpty) {
+          current = _getLowestFScoreFromSet(openSet);
+
+          if (current == end) {
+            print("$current, $end");
+
+            if (current.selectionType == GridSelectionType.cu) {
+              end = _getElementByType(GridSelectionType.end);
+            } else {
+              print("END!");
+              singleSolution.insert(0, start);
+              singleSolution.insert(singleSolution.length - 1, end);
+              _solutions.add(singleSolution);
+              break;
+            }
+          }
+
+          openSet.remove(current);
+          closeSet.add(current);
+
+          final neighbors =
+              current.getNeighbors(maxRows: height, maxCols: width);
+
+          for (final tupleItem in neighbors) {
+            final neighbor = _getItemFromGridFromRowAndCols(
+                tupleItem.item1, tupleItem.item2);
+
+            if (!closeSet.contains(neighbor)) {
+              final tentativeGScore =
+                  current.spot.g + _heuristic(current, neighbor);
+
+              if (!openSet.contains(neighbor)) {
+                openSet.add(neighbor);
+              }
+
+              if (tentativeGScore <= neighbor.spot.g) {
+                neighbor.spot.g = tentativeGScore;
+                neighbor.spot.h = _heuristic(current, end);
+                neighbor.spot.f = neighbor.spot.g + neighbor.spot.h;
+
+                neighbor.spot.previous = current;
+              }
+            }
+          }
+
+          _buildWalkPath(openSet, closeSet);
+          singleSolution = _buildPathForSolution(current);
+          _setTotalKm(singleSolution);
+
+          await Future.delayed(Duration(
+            milliseconds: AppConstants.DELAY_ANIMATION_SOLUTION,
+          ));
+
+          notifyListeners();
         }
-
-        _buildWalkPath(openSet, closeSet);
-        final path = _buildPathForSolution(current);
-        _totalSolutionKm = path.length * AppConstants.KM_MULTIPLIER;
-
-        await Future.delayed(Duration(
-          milliseconds: AppConstants.DELAY_ANIMATION_SOLUTION,
-        ));
-
-        notifyListeners();
       }
+
+      retryCount++;
     }
+
+    _initSpots();
 
     _calculatingPath = false;
     notifyListeners();
@@ -346,6 +388,11 @@ class GridNotifier extends BaseNotifier
   void _initSpots() {
     _items.forEach((element) {
       element.spot = Spot.zeroCost();
+
+      element.selectionType =
+          element.selectionType == GridSelectionType.solution
+              ? GridSelectionType.walked
+              : element.selectionType;
     });
   }
 
@@ -388,20 +435,19 @@ class GridNotifier extends BaseNotifier
     if (_allowDiagonal) {
       d = _dist(current, gridItem);
     } else {
-      d = (current.row - gridItem.row) +
-          (current.column - gridItem.column);
+      d = (current.row - gridItem.row) + (current.column - gridItem.column);
     }
 
     return d;
   }
 
-  void _buildWalkPath(
-      List<GridItem> openSet, List<GridItem> closeSet) {
+  void _buildWalkPath(List<GridItem> openSet, List<GridItem> closeSet) {
     final walkedSet = [...openSet, ...closeSet];
 
     walkedSet.forEach((e) {
       if (e.selectionType != GridSelectionType.start &&
           e.selectionType != GridSelectionType.wall &&
+          e.selectionType != GridSelectionType.cu &&
           e.selectionType != GridSelectionType.end) {
         e.selectionType = GridSelectionType.walked;
       }
@@ -418,12 +464,40 @@ class GridNotifier extends BaseNotifier
       temp = temp.spot.previous;
     }
 
+    _setPathSolution(path);
+
+    return path;
+  }
+
+  onSolutionTap(int index) {
+    _initSpots();
+
+    final solution = solutions[index];
+
+    _setPathSolution(solution);
+    _setTotalKm(solution);
+  }
+
+  void _setTotalKm(List<GridItem> singleSolution) {
+    _totalSolutionKm = singleSolution.length * AppConstants.KM_MULTIPLIER;
+    notifyListeners();
+  }
+
+  void _setPathSolution(List<GridItem> path) {
     path.forEach((e) {
       if (e.selectionType != GridSelectionType.start &&
+          e.selectionType != GridSelectionType.cu &&
           e.selectionType != GridSelectionType.end)
         e.selectionType = GridSelectionType.solution;
     });
+  }
 
-    return path;
+  onTripDetail(int index) {
+    final solution = solutions[index];
+
+    navigateTo(
+      RouteEnum.routeDetail,
+      arguments: RouteDetailBundle(solution),
+    );
   }
 }
