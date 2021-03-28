@@ -308,8 +308,6 @@ class GridNotifier extends BaseNotifier
   }
 
   onSolutionTap(int index) {
-    initSpots(_items);
-
     final solution = solutions[index];
 
     markPathAsSolution(solution);

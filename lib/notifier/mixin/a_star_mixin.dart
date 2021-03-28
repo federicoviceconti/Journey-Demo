@@ -14,7 +14,7 @@ mixin AStarMixin implements GridMixin {
     List<GridSelectionType> stepsToSearch,
   }) async {
     final List<List<GridItem>> solutions = [];
-    initSpots(allItems);
+    _initSpotsAndMarkSolutionAsWalked(allItems);
 
     GridItem current;
     GridItem start = getElementByType(allItems, GridSelectionType.start);
@@ -36,9 +36,7 @@ mixin AStarMixin implements GridMixin {
             openSet = [current];
             end = getElementByType(allItems, stepsToSearch.removeAt(0), excludes: end);
 
-            allItems.forEach((element) {
-              element.spot = Spot.zeroCostWithPrevious(element.spot.previous);
-            });
+            _initSpotWithPrevious(allItems);
           } else {
             singleSolution.insert(0, start);
             singleSolution.insert(singleSolution.length - 1, end);
@@ -82,11 +80,11 @@ mixin AStarMixin implements GridMixin {
       }
     }
 
-    initSpots(allItems);
+    _initSpotsAndMarkSolutionAsWalked(allItems);
     return solutions;
   }
 
-  void initSpots(List<GridItem> items) {
+  void _initSpotsAndMarkSolutionAsWalked(List<GridItem> items) {
     items.forEach((element) {
       element.spot = Spot.zeroCost();
 
@@ -163,5 +161,11 @@ mixin AStarMixin implements GridMixin {
     }
 
     return path;
+  }
+
+  void _initSpotWithPrevious(List<GridItem> allItems) {
+    allItems.forEach((element) {
+      element.spot = Spot.zeroCostWithPrevious(element.spot.previous);
+    });
   }
 }
