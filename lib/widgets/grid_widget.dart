@@ -433,7 +433,7 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
                 RegularText(
                   "CU in path: $cuInPath",
                   color: Colors.black,
-                )
+                ),
               ],
             ),
           ),

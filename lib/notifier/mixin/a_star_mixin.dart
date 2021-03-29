@@ -11,14 +11,14 @@ mixin AStarMixin implements GridMixin {
     int height,
     int delay,
     Function(List<GridItem> singleSolution) onIntermediateStepDone,
-    List<GridSelectionType> stepsToSearch,
+    List<GridItem> endSteps,
   }) async {
     List<GridItem> singleSolution = [];
     _initSpotsAndMarkSolutionAsWalked(allItems);
 
     GridItem current;
     GridItem start = getElementByType(allItems, GridSelectionType.start);
-    GridItem end = getElementByType(allItems, stepsToSearch.removeAt(0));
+    GridItem end = endSteps.removeAt(0);
 
     if (start != null && end != null) {
       List<GridItem> openSet = [start];
@@ -30,9 +30,9 @@ mixin AStarMixin implements GridMixin {
             _getLowestFScoreFromSet(openSet, allowDiagonal: allowDiagonal);
 
         if (current == end) {
-          if (stepsToSearch.isNotEmpty) {
+          if (endSteps.isNotEmpty) {
             openSet = [current];
-            end = getElementByType(allItems, stepsToSearch.removeAt(0), excludes: end);
+            end = endSteps.removeAt(0);
 
             _initSpotWithPrevious(allItems);
           } else {

@@ -354,24 +354,27 @@ class GridNotifier extends BaseNotifier
   }
 
   _calculateSolutions() async {
-    final cuElements =
-      _filterCUForEvSelected().map((e) => e.selectionType).toList();
+    final cuElements = _filterCUForEvSelected();
 
-    final endOnlySearch = [GridSelectionType.end];
+    final endOnlySearch = getElementsByType(items, GridSelectionType.end);
     final endSolutionSearch = await _calculateAStar(endOnlySearch);
     _solutions.add(endSolutionSearch);
 
-    if(cuElements.isNotEmpty) {
-      final cuSearch = [...cuElements, GridSelectionType.end];
+    if (cuElements.isNotEmpty) {
+      final List<GridItem> cuSearch = [
+        ...cuElements,
+        ...getElementsByType(items, GridSelectionType.end),
+      ];
       final cuSearchSolution = await _calculateAStar(cuSearch);
       _solutions.add(cuSearchSolution);
     }
   }
 
-  Future<List<GridItem>> _calculateAStar(stepsToSearch) async {
+  Future<List<GridItem>> _calculateAStar(
+      List<GridItem> endStepsToSearch) async {
     return await calculateAStar(
       allItems: _items,
-      stepsToSearch: stepsToSearch,
+      endSteps: endStepsToSearch,
       allowDiagonal: _allowDiagonal,
       width: _width,
       height: _height,
