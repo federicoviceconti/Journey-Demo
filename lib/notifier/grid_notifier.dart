@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:journey_demo/environment/app_constants.dart';
@@ -13,8 +11,10 @@ import 'package:journey_demo/notifier/mixin/mixin_loader_notifier.dart';
 import 'package:journey_demo/notifier/model/grid_item.dart';
 import 'package:journey_demo/notifier/model/map_item.dart';
 import 'package:journey_demo/notifier/model/tooltip_bundle.dart';
+import 'package:journey_demo/notifier/model/tuple.dart';
 import 'package:journey_demo/services/ev/response/ev_list_response.dart';
-
+import 'package:journey_demo/notifier/model/plug_type.dart';
+import 'package:journey_demo/services/open_charge_map/response/charging_station_list_response.dart';
 import 'mixin/charge_map_mixin.dart';
 
 class GridNotifier extends BaseNotifier
@@ -118,9 +118,9 @@ class GridNotifier extends BaseNotifier
   }
 
   void onGridTap(GridItem item) {
-    if (lockClick) return;
-
     if (tooltipBundle == null) {
+      if (lockClick) return;
+
       switch (currentState) {
         case GridSelectionType.none:
           item.selectionType = GridSelectionType.start;
@@ -267,12 +267,16 @@ class GridNotifier extends BaseNotifier
         position.dx + width > phoneWidth ? position.dx - width : position.dx;
 
     if (item.station != null) {
-      _tooltipBundle = TooltipBundle(
+      _tooltipBundle = TooltipBundle<StationPlug>(
         top: position.dy,
         left: xAxisPosition,
         title: item.station.title,
         subtitle: item.station.addressLine,
         width: width,
+        descriptionWithImages: Tuple2<String, List<StationPlug>>(
+          "Plugs:",
+          item.station.plugs,
+        ),
       );
     } else {
       _tooltipBundle = null;
@@ -286,22 +290,7 @@ class GridNotifier extends BaseNotifier
     _calculatingPath = true;
     notifyListeners();
 
-    final cuElements = getElementsByType(items, GridSelectionType.cu)
-        .map((e) => e.selectionType)
-        .toList();
-
-    _solutions = await calculateAStar(
-      allItems: _items,
-      stepsToSearch: [
-        ...cuElements,
-        GridSelectionType.end,
-      ],
-      allowDiagonal: _allowDiagonal,
-      width: _width,
-      height: _height,
-      delay: AppConstants.DELAY_ANIMATION_SOLUTION,
-      onIntermediateStepDone: onIntermediateStepDone,
-    );
+    await _calculateSolutions();
 
     _calculatingPath = false;
     notifyListeners();
@@ -309,6 +298,10 @@ class GridNotifier extends BaseNotifier
 
   onSolutionTap(int index) {
     final solution = solutions[index];
+
+    _items.forEach((element) {
+      markElementSolutionAsWalked(element);
+    });
 
     markPathAsSolution(solution);
     _setTotalKm(solution);
@@ -330,7 +323,7 @@ class GridNotifier extends BaseNotifier
   }
 
   void _setTotalKm(List<GridItem> singleSolution) {
-    _totalSolutionKm = singleSolution.length * AppConstants.KM_MULTIPLIER;
+    _totalSolutionKm = _getTotalKmForPath(singleSolution);
     notifyListeners();
   }
 
@@ -340,6 +333,50 @@ class GridNotifier extends BaseNotifier
     navigateTo(
       RouteEnum.routeDetail,
       arguments: RouteDetailBundle(solution),
+    );
+  }
+
+  num _getTotalKmForPath(List<GridItem> singleSolution) {
+    return singleSolution.length * AppConstants.KM_MULTIPLIER;
+  }
+
+  List<GridItem> _filterCUForEvSelected() {
+    return getElementsByType(_items, GridSelectionType.cu).where((cu) {
+      final cuPlugs = cu.station.plugs;
+      final evPlugs = _evSelected.plugs;
+
+      return cuPlugs.firstWhere(
+            (plug) => evPlugs.contains(plug.type),
+            orElse: () => null,
+          ) !=
+          null;
+    }).toList();
+  }
+
+  _calculateSolutions() async {
+    final cuElements =
+      _filterCUForEvSelected().map((e) => e.selectionType).toList();
+
+    final endOnlySearch = [GridSelectionType.end];
+    final endSolutionSearch = await _calculateAStar(endOnlySearch);
+    _solutions.add(endSolutionSearch);
+
+    if(cuElements.isNotEmpty) {
+      final cuSearch = [...cuElements, GridSelectionType.end];
+      final cuSearchSolution = await _calculateAStar(cuSearch);
+      _solutions.add(cuSearchSolution);
+    }
+  }
+
+  Future<List<GridItem>> _calculateAStar(stepsToSearch) async {
+    return await calculateAStar(
+      allItems: _items,
+      stepsToSearch: stepsToSearch,
+      allowDiagonal: _allowDiagonal,
+      width: _width,
+      height: _height,
+      delay: AppConstants.DELAY_ANIMATION_SOLUTION,
+      onIntermediateStepDone: onIntermediateStepDone,
     );
   }
 }

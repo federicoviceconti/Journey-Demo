@@ -6,12 +6,14 @@ class CardTooltip extends StatelessWidget {
   final double width;
   final String title;
   final String subtitle;
+  final Widget child;
 
   const CardTooltip({
     Key key,
     this.width,
     this.title,
     this.subtitle,
+    this.child,
   }) : super(key: key);
 
   @override
@@ -33,6 +35,7 @@ class CardTooltip extends StatelessWidget {
                 subtitle,
                 color: Colors.black,
               ),
+              child ?? Container(),
             ],
           ),
         ),

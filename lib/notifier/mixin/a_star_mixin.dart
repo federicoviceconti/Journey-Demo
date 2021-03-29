@@ -4,7 +4,7 @@ import 'package:journey_demo/notifier/mixin/grid_mixin.dart';
 import 'package:journey_demo/notifier/model/grid_item.dart';
 
 mixin AStarMixin implements GridMixin {
-  Future<List<List<GridItem>>> calculateAStar({
+  Future<List<GridItem>> calculateAStar({
     List<GridItem> allItems,
     bool allowDiagonal,
     int width,
@@ -13,7 +13,7 @@ mixin AStarMixin implements GridMixin {
     Function(List<GridItem> singleSolution) onIntermediateStepDone,
     List<GridSelectionType> stepsToSearch,
   }) async {
-    final List<List<GridItem>> solutions = [];
+    List<GridItem> singleSolution = [];
     _initSpotsAndMarkSolutionAsWalked(allItems);
 
     GridItem current;
@@ -24,8 +24,6 @@ mixin AStarMixin implements GridMixin {
       List<GridItem> openSet = [start];
       List<GridItem> closeSet =
           getElementsByType(allItems, GridSelectionType.wall);
-
-      List<GridItem> singleSolution = [];
 
       while (openSet.isNotEmpty) {
         current =
@@ -40,7 +38,6 @@ mixin AStarMixin implements GridMixin {
           } else {
             singleSolution.insert(0, start);
             singleSolution.insert(singleSolution.length - 1, end);
-            solutions.add(singleSolution);
             break;
           }
         }
@@ -81,17 +78,14 @@ mixin AStarMixin implements GridMixin {
     }
 
     _initSpotsAndMarkSolutionAsWalked(allItems);
-    return solutions;
+    return singleSolution;
   }
 
   void _initSpotsAndMarkSolutionAsWalked(List<GridItem> items) {
     items.forEach((element) {
       element.spot = Spot.zeroCost();
 
-      element.selectionType =
-          element.selectionType == GridSelectionType.solution
-              ? GridSelectionType.walked
-              : element.selectionType;
+      markElementSolutionAsWalked(element);
     });
   }
 
@@ -167,5 +161,12 @@ mixin AStarMixin implements GridMixin {
     allItems.forEach((element) {
       element.spot = Spot.zeroCostWithPrevious(element.spot.previous);
     });
+  }
+
+  void markElementSolutionAsWalked(GridItem element) {
+    element.selectionType =
+    element.selectionType == GridSelectionType.solution
+        ? GridSelectionType.walked
+        : element.selectionType;
   }
 }

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:journey_demo/common/asset/image_helper.dart';
 import 'package:journey_demo/common/text/bold_text.dart';
 import 'package:journey_demo/common/text/regular_text.dart';
 import 'package:journey_demo/common/widget/base_widget.dart';
 import 'package:journey_demo/common/widget/card_tooltip.dart';
 import 'package:journey_demo/notifier/grid_notifier.dart';
+import 'package:journey_demo/notifier/model/plug_type.dart';
+import 'package:journey_demo/services/open_charge_map/response/charging_station_list_response.dart';
 import 'package:provider/provider.dart';
 import 'package:journey_demo/notifier/model/grid_item.dart';
 
@@ -25,7 +28,9 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return BaseWidget(
-      loadingBundle: Provider.of<GridNotifier>(context).loadingBundle,
+      loadingBundle: Provider
+          .of<GridNotifier>(context)
+          .loadingBundle,
       child: _buildBody(),
     );
   }
@@ -39,17 +44,22 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
         },
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _buildGridView(),
-              SizedBox(height: 8),
-              _buildSolutionInfo(),
-              _buildButtons(),
-              _buildSolutions(),
-              _buildData(),
-            ],
-          ),
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildGridView(),
+                  SizedBox(height: 8),
+                  _buildSolutionInfo(),
+                  _buildButtons(),
+                  _buildSolutions(),
+                  _buildData(),
+                ],
+              ),
+            ),
+            _buildTooltip(),
+          ],
         ),
       ),
     );
@@ -164,7 +174,6 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
               crossAxisCount: notifier.width,
               children: _generateGrid(notifier),
             ),
-            _buildTooltip(notifier),
           ],
         );
       },
@@ -278,22 +287,58 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
     );
   }
 
-  _buildTooltip(GridNotifier notifier) {
-    final bundle = notifier.tooltipBundle;
+  _buildTooltip() {
+    return Consumer<GridNotifier>(
+      builder: (_, notifier, __) {
+        final bundle = notifier.tooltipBundle;
 
-    if (bundle == null) {
-      return IgnorePointer();
-    } else {
-      return Positioned(
-        top: bundle.top,
-        left: bundle.left,
-        child: CardTooltip(
-          width: bundle.width,
-          title: bundle.title,
-          subtitle: bundle.subtitle,
-        ),
-      );
-    }
+        if (bundle == null) {
+          return IgnorePointer();
+        } else {
+          final List<StationPlug> stationPlugs = bundle.descriptionWithImages
+              .item2;
+
+          return Positioned(
+            top: bundle.top,
+            left: bundle.left,
+            child: CardTooltip(
+              width: bundle.width,
+              title: bundle.title,
+              subtitle: bundle.subtitle,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 4),
+                  BoldText(
+                    bundle.descriptionWithImages.item1,
+                    color: Colors.black,
+                  ),
+                  SizedBox(height: 4),
+                  Wrap(
+                    children: _buildPlugs(stationPlugs),
+                  )
+                ],
+              ),
+            ),
+          );
+        }
+      },
+    );
+  }
+
+  _buildPlugs(final List<StationPlug> plugs) {
+    return plugs
+        .map(
+          (e) =>
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: getSvg(
+              path: e.type.svg,
+              width: 30,
+            ),
+          ),
+    )
+        .toList();
   }
 
   _buildRowInformation(String title, String text) {
@@ -352,10 +397,11 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
               ListView.separated(
                 physics: NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
-                itemBuilder: (_, index) => _buildSolutionItem(
-                  index,
-                  notifier,
-                ),
+                itemBuilder: (_, index) =>
+                    _buildSolutionItem(
+                      index,
+                      notifier,
+                    ),
                 separatorBuilder: (_, __) => Divider(),
                 itemCount: notifier.solutions.length,
               ),
@@ -367,14 +413,28 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
   }
 
   _buildSolutionItem(int index, GridNotifier notifier) {
+    final solution = notifier.solutions[index];
+    final cuInPath = notifier
+        .getElementsByType(solution, GridSelectionType.cu)
+        .length;
+
     return GestureDetector(
       onTap: () => notifier.onSolutionTap(index),
       child: Row(
         children: [
           Expanded(
-            child: RegularText(
-              "Solution #$index len ${notifier.solutions[index].length}",
-              color: Colors.black,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RegularText(
+                  "Solution #$index len ${solution.length}",
+                  color: Colors.black,
+                ),
+                RegularText(
+                  "CU in path: $cuInPath",
+                  color: Colors.black,
+                )
+              ],
             ),
           ),
           RaisedButton(

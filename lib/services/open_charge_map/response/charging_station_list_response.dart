@@ -1,4 +1,3 @@
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:journey_demo/notifier/model/plug_type.dart';
 import 'package:journey_demo/services/api/base_response.dart';
 import 'package:journey_demo/services/api/client.dart';
