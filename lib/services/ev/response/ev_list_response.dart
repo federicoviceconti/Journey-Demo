@@ -10,24 +10,27 @@ class EvResponseList extends BaseResponse {
 
   EvResponseList.fromResponseData(ResponseData responseData) {
     super.fromResponseData(responseData);
-    final body = jsonDecode(responseData.body);
-    this.items = body['data']
-        .where((item) => item['vehicle_type'] == 'car')
-        .map((item) {
-          return EvItem.fromJson(item);
-        })
-        .toList()
-        .cast<EvItem>();
 
-    this.brands = body['data']
-        .map((item) {
-          return Brand(
-            id: item['id'],
-            name: item['name'],
-          );
-        })
-        .toList()
-        .cast<Brand>();
+    if (responseData.body != null) {
+      final body = jsonDecode(responseData.body);
+      this.items = body['data']
+          .where((item) => item['vehicle_type'] == 'car')
+          .map((item) {
+            return EvItem.fromJson(item);
+          })
+          .toList()
+          .cast<EvItem>();
+
+      this.brands = body['data']
+          .map((item) {
+            return Brand(
+              id: item['id'],
+              name: item['name'],
+            );
+          })
+          .toList()
+          .cast<Brand>();
+    }
   }
 }
 
@@ -62,17 +65,17 @@ class EvItem {
 
     try {
       _addToPlugs(json['ac_charger']['ports']);
-    } catch(e) {}
+    } catch (e) {}
 
     try {
       _addToPlugs(json['dc_charger']['ports']);
-    } catch(e) {}
+    } catch (e) {}
   }
 
   void _addToPlugs(items) {
     items.forEach((item) {
       final type = (item as String).type;
-      if(type != PlugType.none) {
+      if (type != PlugType.none) {
         plugs.add(type);
       }
     });

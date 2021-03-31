@@ -44,11 +44,11 @@ class GridNotifier extends BaseNotifier
 
   EvItem _evSelected;
 
-  int _width = 10;
+  int _width = 15;
 
   int get width => _width;
 
-  int _height = 12;
+  int _height = 15;
 
   int get height => _height;
 

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:journey_demo/notifier/model/grid_item.dart';
 
 mixin GridMixin {
@@ -22,5 +24,11 @@ mixin GridMixin {
     } catch (e) {
       throw UnsupportedError("No element inside grid at ($row,$col)");
     }
+  }
+
+  num dist(GridItem current, GridItem gridItem) {
+    final x = gridItem.row - gridItem.row;
+    final y = gridItem.column - gridItem.column;
+    return sqrt(pow(x, 2) + pow(y, 2)).toInt();
   }
 }

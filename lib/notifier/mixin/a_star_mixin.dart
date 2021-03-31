@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:journey_demo/notifier/mixin/grid_mixin.dart';
 import 'package:journey_demo/notifier/model/grid_item.dart';
 
@@ -17,7 +15,7 @@ mixin AStarMixin implements GridMixin {
     _initSpotsAndMarkSolutionAsWalked(allItems);
 
     GridItem current;
-    GridItem start = getElementByType(allItems, GridSelectionType.start);
+    final GridItem start = getElementByType(allItems, GridSelectionType.start);
     GridItem end = endSteps.removeAt(0);
 
     if (start != null && end != null) {
@@ -36,8 +34,10 @@ mixin AStarMixin implements GridMixin {
 
             _initSpotWithPrevious(allItems);
           } else {
+            singleSolution.remove(start);
             singleSolution.insert(0, start);
-            singleSolution.insert(singleSolution.length - 1, end);
+            singleSolution.add(end);
+            singleSolution = singleSolution.reversed.toList();
             break;
           }
         }
@@ -113,16 +113,10 @@ mixin AStarMixin implements GridMixin {
     return openSet[winner];
   }
 
-  num _dist(GridItem current, GridItem gridItem) {
-    final x = gridItem.row - gridItem.row;
-    final y = gridItem.column - gridItem.column;
-    return sqrt(pow(x, 2) + pow(y, 2)).toInt();
-  }
-
   num _heuristic(GridItem current, GridItem gridItem, bool allowDiagonal) {
     int d;
     if (allowDiagonal) {
-      d = _dist(current, gridItem);
+      d = dist(current, gridItem);
     } else {
       d = (current.row - gridItem.row).abs() +
           (current.column - gridItem.column).abs();
