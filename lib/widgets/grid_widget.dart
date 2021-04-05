@@ -387,25 +387,31 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
   _buildSolutions() {
     return Consumer<GridNotifier>(
       builder: (_, notifier, __) {
-        return Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              BoldText("Solutions:", color: Colors.black),
-              SizedBox(height: 4),
-              ListView.separated(
-                physics: NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                itemBuilder: (_, index) =>
-                    _buildSolutionItem(
-                      index,
-                      notifier,
-                    ),
-                separatorBuilder: (_, __) => Divider(),
-                itemCount: notifier.solutions.length,
-              ),
-            ],
+        return Visibility(
+          visible: true,
+          child: Padding(
+            padding: const EdgeInsets.only(right: 8.0, top: 4.0,),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: BoldText("Solutions:", color: Colors.black),
+                ),
+                SizedBox(height: 4),
+                ListView.separated(
+                  physics: NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  itemBuilder: (_, index) =>
+                      _buildSolutionItem(
+                        index,
+                        notifier,
+                      ),
+                  separatorBuilder: (_, __) => Divider(),
+                  itemCount: notifier.solutions.length,
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -422,6 +428,15 @@ class _GridWidgetState extends State<GridWidget> with WidgetsBindingObserver {
       onTap: () => notifier.onSolutionTap(index),
       child: Row(
         children: [
+          Visibility(
+            visible: notifier.solutionIndexSelected == index,
+            child: Container(
+              width: 3,
+              height: 20,
+              color: Colors.deepOrange,
+            ),
+          ),
+          SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

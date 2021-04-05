@@ -24,6 +24,10 @@ class GridNotifier extends BaseNotifier
 
   TooltipBundle _tooltipBundle;
 
+  int _solutionIndexSelected = -1;
+
+  int get solutionIndexSelected => _solutionIndexSelected;
+
   bool _calculatingPath = false;
 
   bool get calculatingPath => _calculatingPath;
@@ -198,6 +202,7 @@ class GridNotifier extends BaseNotifier
     _lockClick = false;
     _calculatingPath = false;
     _solutions = [];
+    _solutionIndexSelected = -1;
     notifyListeners();
   }
 
@@ -298,6 +303,7 @@ class GridNotifier extends BaseNotifier
 
   onSolutionTap(int index) {
     final solution = solutions[index];
+    _solutionIndexSelected = index;
 
     _items.forEach((element) {
       markElementSolutionAsWalked(element);
