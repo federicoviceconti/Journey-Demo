@@ -1,10 +1,10 @@
 # journey_demo
 
-Prototype of journey planner using Flutter framework, using OpenCharge and OpenStreetMap data.
+Prototype of journey planner using Flutter framework, using OpenCharge API for retrieving CU data.
 
 ## Roadmap
 - A* Grid
-- A* Map (todo)
+- A* Map (todo), using the OpenStreetMap data
 
 ## App screen
 
