@@ -1,8 +1,8 @@
-# journey_demo
+# 🚗 journey_demo
 
-Prototype of journey planner using Flutter framework, using OpenCharge API for retrieving CU data.
+Prototype of journey planner using Flutter framework. Using OpenCharge API for retrieving CU data.
 
-## DEMO App screen
+## 🗒 Some notes about the app
 
 - The blue path represent the solution, which the car use the reach the destination. 
 - The yellow boxes are the node "walked", in order to get the solution.
@@ -18,6 +18,6 @@ Prototype of journey planner using Flutter framework, using OpenCharge API for r
 
 <img src="https://github.com/federicoviceconti/Journey-Demo/blob/main/demo/grid_astar_withcu.png" alt="mockup demo app with cu" width="200">
 
-## Credits
+## 🙋‍♂️ Credits
 - A* Grid: you can find more info about the A-Star search algorithm into the [Wikipedia page](https://en.wikipedia.org/wiki/A*_search_algorithm)
 - CU Data: charging stations data are provided by [Open Charge API](https://openchargemap.org/site/develop/api)
