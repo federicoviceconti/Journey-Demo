@@ -6,8 +6,10 @@ Prototype of journey planner using Flutter framework. Using OpenCharge API for r
 
 - The blue path represent the solution, which the car use the reach the destination. 
 - The yellow boxes are the node "walked", in order to get the solution.
-- The green boxes represent the charging stations
-- The app grid could be changed at the [following file](https://github.com/federicoviceconti/Journey-Demo/blob/main/lib/notifier/grid_notifier.dart)
+- The green boxes represent the charging stations.
+- The app grid could be changed at the [following file](https://github.com/federicoviceconti/Journey-Demo/blob/main/lib/notifier/grid_notifier.dart).
+
+## Demo screens
 
 **Grid 10x12**: In this example there aren't Charging Units to reach, but only a start and an end point.
 
@@ -19,5 +21,5 @@ Prototype of journey planner using Flutter framework. Using OpenCharge API for r
 <img src="https://github.com/federicoviceconti/Journey-Demo/blob/main/demo/grid_astar_withcu.png" alt="mockup demo app with cu" width="200">
 
 ## 🙋‍♂️ Credits
-- A* Grid: you can find more info about the A-Star search algorithm into the [Wikipedia page](https://en.wikipedia.org/wiki/A*_search_algorithm)
-- CU Data: charging stations data are provided by [Open Charge API](https://openchargemap.org/site/develop/api)
+- A* Grid: you can find more info about the A-Star search algorithm into the [Wikipedia page](https://en.wikipedia.org/wiki/A*_search_algorithm).
+- CU Data: charging stations data are provided by [Open Charge API](https://openchargemap.org/site/develop/api).
