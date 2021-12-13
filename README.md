@@ -9,7 +9,7 @@ Prototype of journey planner using Flutter framework. Using OpenCharge API for r
 - The green boxes represent the charging stations.
 - The app grid could be changed at the [following file](https://github.com/federicoviceconti/Journey-Demo/blob/main/lib/notifier/grid_notifier.dart).
 
-## Demo screens
+## ❤️ Demo screens
 
 **Grid 10x12**: In this example there aren't Charging Units to reach, but only a start and an end point.
 
